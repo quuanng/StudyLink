@@ -1,4 +1,4 @@
-Study Group Finder
+StudyLink (Study Group Finder)
 
 To run backend:
 
