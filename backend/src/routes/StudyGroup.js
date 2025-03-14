@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { StudyGroupModel } from "../models/StudyGroup.js"
 import { ClassModel } from "../models/Class.js"
+import { ChatModel } from "../models/Chat.js"
 import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
@@ -13,6 +14,37 @@ router.get("/:groupId", async (req, res) => {
   } catch (error) {
     console.log(error)
     res.status(500).json({ error: "Error getting study group."})
+  }
+})
+
+// Get all study groups a user is in
+router.get("/user/:userId", async (req, res) => {
+  console.log("WHAHAHAHA")
+  const { userId } = req.params
+
+  try {
+    const studyGroups = await StudyGroupModel.find({ "members.userId": userId })
+
+    // Fetch the latest chat message for each study group
+    const studyGroupsWithMessages = await Promise.all(
+      studyGroups.map(async (group) => {
+        const latestMessage = await ChatModel.findOne({ groupId: group._id })
+          .sort({ timestamp: -1 }) // Get the most recent message
+          .lean()
+
+        return {
+          id: group._id,
+          title: group.title,
+          lastMessage: latestMessage ? latestMessage.message : "No messages yet",
+          lastDate: latestMessage ? latestMessage.timestamp : null
+        }
+      })
+    )
+
+    res.status(200).json(studyGroupsWithMessages)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to fetch study groups and messages for the user." })
   }
 })
 
