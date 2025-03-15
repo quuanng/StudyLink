@@ -6,7 +6,7 @@ const StudyGroupSchema = new mongoose.Schema({
   time: { type: Date, required: true },
   location: { type: String, required: true },
   maxStudents: { type: Number, required: true },
-  private: { type: Boolean, required: true},
+  priv: { type: Boolean, required: true},
   creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // User who created the group
   members: [
     {

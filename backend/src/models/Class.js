@@ -7,7 +7,7 @@ const ClassSchema = new mongoose.Schema({
   descr: { type: String, required: true},
   count: { type: Number, required: true},
   saves: { type: Number, required: true },
-  studyGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: "StudyGroup" }]
+  //studyGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: "StudyGroup" }]
 })
 
 export const ClassModel = mongoose.model("Class", ClassSchema)

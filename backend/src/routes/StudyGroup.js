@@ -1,13 +1,55 @@
 import { Router } from "express"
 import { StudyGroupModel } from "../models/StudyGroup.js"
 import { ClassModel } from "../models/Class.js"
+import { ChatModel } from "../models/Chat.js"
 import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
 
+// Get study group info
+router.get("/:groupId", async (req, res) => {
+  try {
+    const group = await StudyGroupModel.findById(req.params.groupId)
+    res.json(group)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error: "Error getting study group."})
+  }
+})
+
+// Get all study groups a user is in
+router.get("/user/:userId", async (req, res) => {
+  const { userId } = req.params
+
+  try {
+    const studyGroups = await StudyGroupModel.find({ "members.userId": userId })
+
+    // Fetch the latest chat message for each study group
+    const studyGroupsWithMessages = await Promise.all(
+      studyGroups.map(async (group) => {
+        const latestMessage = await ChatModel.findOne({ groupId: group._id })
+          .sort({ timestamp: -1 }) // Get the most recent message
+          .lean()
+
+        return {
+          id: group._id,
+          title: group.title,
+          lastMessage: latestMessage ? latestMessage.message : "No messages yet",
+          lastDate: latestMessage ? latestMessage.timestamp : null
+        }
+      })
+    )
+
+    res.status(200).json(studyGroupsWithMessages)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to fetch study groups and messages for the user." })
+  }
+})
+
 // Add a new study group
 router.post("/add", authMiddleware, async (req, res) => {
-  const { classId, section, title, time, location, maxStudents, creatorId } = req.body
+  const { classId, title, time, location, maxStudents, priv, creatorId } = req.body
 
   try {
     // Ensure the class exists
@@ -19,11 +61,11 @@ router.post("/add", authMiddleware, async (req, res) => {
     // Create the study group
     const newStudyGroup = new StudyGroupModel({
       classId,
-      section,
       title,
       time,
       location,
       maxStudents,
+      priv,
       creatorId,
       members: [{ userId: creatorId }] // Add creator as the first member
     })
@@ -40,7 +82,7 @@ router.post("/add", authMiddleware, async (req, res) => {
 })
 
 // Add a user to a study group
-router.post("/join", authMiddleware, async (req, res) => {
+router.post("/join", async (req, res) => {
   const { studyGroupId, userId } = req.body
 
   try {

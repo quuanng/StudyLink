@@ -1,32 +1,37 @@
-import React, { useState } from 'react'
-import { useNavigation } from '@react-navigation/native';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image, Pressable } from 'react-native'
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/MainNavigator';
+import React from 'react'
+import { useNavigation } from '@react-navigation/native'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { StackNavigationProp } from '@react-navigation/stack'
+import { RootStackParamList } from '../navigation/MainNavigator'
 
 interface ChatListEntryProps {
-
+  id: string
+  title: string
+  lastMessage: string
+  lastDate: string | null
 }
 
-const ChatListEntry: React.FC<ChatListEntryProps> = ({ }) => {
+const ChatListEntry: React.FC<ChatListEntryProps> = ({ id, title, lastMessage, lastDate }) => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
 
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const formattedDate = lastDate ? lastDate.split("T")[0] : "No Date"
 
   return (
-    <Pressable style={styles.container} onPress={() => navigation.navigate('SingleChatScreen', {chatId:0})}>
+    <Pressable 
+      style={styles.container} 
+      onPress={() => navigation.navigate('SingleChatScreen', { chatId: id })}
+    >
       <View style={styles.sub_container}>
         <View style={styles.icon_container}>
-          <View style={styles.placeholder_icon}>
-
-          </View>
+          <View style={styles.placeholder_icon} />
         </View>
         <View style={styles.text_parent_container}>
           <View style={styles.text_headline_container}>
-            <Text style={styles.text_headline_group_name}>CSCI 4041 - My Group</Text>
-            <Text style={styles.text_headline_last_date}>2/28/25</Text>
+            <Text style={styles.text_headline_group_name}>{title}</Text>
+            <Text style={styles.text_headline_last_date}>{formattedDate}</Text>
           </View>
           <View style={styles.text_body_container}>
-            <Text style={styles.body_label}>Hey, does anyone want to work on the homework together tonight?</Text>
+            <Text style={styles.body_label}>{lastMessage || "No messages yet"}</Text>
           </View>
         </View>
       </View>
@@ -84,10 +89,6 @@ const styles = StyleSheet.create({
   },
   body_label: {
     color: '#696969'
-  },
-  image: {
-    width: 150,
-    height: 150,
   },
 })
 

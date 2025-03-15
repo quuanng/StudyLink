@@ -15,8 +15,8 @@ const Stack = createStackNavigator()
 
 export type RootStackParamList = {
   MainTabs: undefined,
-  SingleChatScreen: { chatId: number }; // Define chatId as a parameter
-};
+  SingleChatScreen: { chatId: string }
+}
 
 function TabNavigator() {
   const { theme } = useContext(ThemeContext)

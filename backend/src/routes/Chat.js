@@ -1,18 +1,24 @@
 import { Router } from "express"
+import { ChatModel } from "../models/Chat.js"
 import { StudyGroupModel } from "../models/StudyGroup.js"
 import { ClassModel } from "../models/Class.js"
 import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
 
-// gets all chats from a StudyGroup - this route needs to be authenticated so only logged in users of the StudyGroup get access
 router.get("/:groupId", async (req, res) => {
-    try {
-        const messages = await ChatModel.find({ groupId: req.params.groupId }).sort({ timestamp: 1 })
-        res.json(messages)
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
+  const { groupId } = req.params
+
+  try {
+    const chatMessages = await ChatModel.find({ groupId })
+      .sort({ timestamp: 1 })
+      .lean()
+
+    res.status(200).json(chatMessages)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to fetch chat messages." })
+  }
 })
 
 // sends a chat to a StudyGroup - this route also needs to be authenticated similarly
