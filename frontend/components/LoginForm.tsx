@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native'
+import { View, Text, TextInput, Button, StyleSheet, Alert, Pressable } from 'react-native'
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => void // Callback to handle form submission
   loading?: boolean // Optional: Show a loading state
+  swapForm: () => void
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading, swapForm }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -38,6 +39,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading }) => {
         secureTextEntry
       />
       <Button title={loading ? 'Logging in...' : 'Login'} onPress={handleSubmit} disabled={loading} />
+      <Button title="I don't have an account yet" onPress={swapForm} />
     </View>
   )
 }
@@ -50,6 +52,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  pressableLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: 'blue',
   },
   input: {
     borderWidth: 1,

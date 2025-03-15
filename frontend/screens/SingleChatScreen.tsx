@@ -1,60 +1,123 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, Button, SafeAreaView, ActivityIndicator } from 'react-native'
-import ChatMessage, { ChatMessageData } from '../components/ChatMessage'
-import { useNavigation, useRoute } from '@react-navigation/native'
-import { StackNavigationProp } from '@react-navigation/stack'
-import { RootStackParamList } from '../navigation/MainNavigator'
-import ChatSendBox from '../components/ChatSendBox'
-import backend from '../backend'
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Button, SafeAreaView, ActivityIndicator } from 'react-native';
+import ChatMessage from '../components/ChatMessage';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/MainNavigator';
+import ChatSendBox from '../components/ChatSendBox';
+import backend from '../backend';
 
-export default function SingleChatScreen() {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
-  const route = useRoute()
-  const { chatId } = route.params as { chatId: string }
+export interface RawChatMessageData {
+  _id: string;
+  groupId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: string;
+  readBy: string[];
+}
 
-  const [chatMessages, setChatMessages] = useState<ChatMessageData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export interface MergedChatMessageData {
+  _ids: string[];
+  groupId: string;
+  senderId: string;
+  senderName: string;
+  messages: string[];
+  timestamps: string[];
+  readBy: string[][];
+}
+
+export default function ChatsScreen() {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const route = useRoute();
+  const { chatId } = route.params as { chatId: string };
+
+  const [chatMessages, setChatMessages] = useState<MergedChatMessageData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const createEmptyMergedMessage = (): MergedChatMessageData => ({
+    _ids: [],
+    groupId: "",
+    senderId: "",
+    senderName: "",
+    messages: [],
+    timestamps: [],
+    readBy: []
+  });
+
+  const tryMergeAllMessages = (rawMessages: RawChatMessageData[]): MergedChatMessageData[] => {
+    const sortedByTimestamp = [...rawMessages].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+    let output: MergedChatMessageData[] = [];
+    let curMergedMessage: MergedChatMessageData = createEmptyMergedMessage();
+
+    sortedByTimestamp.forEach(msg => {
+      const lastTimestamp = curMergedMessage.timestamps.length > 0
+        ? Date.parse(curMergedMessage.timestamps[curMergedMessage.timestamps.length - 1])
+        : 0;
+
+      const timeSincePreviousMessageMs = Date.parse(msg.timestamp) - lastTimestamp;
+
+      if (timeSincePreviousMessageMs > 300000 || (msg.senderId !== curMergedMessage.senderId && msg.senderId !== "")) {
+        if (curMergedMessage._ids.length > 0) {
+          output.push(curMergedMessage);
+        }
+        curMergedMessage = createEmptyMergedMessage();
+      }
+
+      curMergedMessage._ids.push(msg._id);
+      curMergedMessage.groupId = msg.groupId;
+      curMergedMessage.senderId = msg.senderId;
+      curMergedMessage.senderName = msg.senderName;
+      curMergedMessage.messages.push(msg.message);
+      curMergedMessage.timestamps.push(msg.timestamp);
+      curMergedMessage.readBy = curMergedMessage.readBy.concat(msg.readBy);
+    });
+
+    if (curMergedMessage._ids.length > 0) {
+      output.push(curMergedMessage);
+    }
+
+    return output;
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await backend.get(`/chat/${chatId}`)
-        setChatMessages(response.data)
+        const response = await backend.get(`/chat/${chatId}`);
+        setChatMessages(tryMergeAllMessages(response.data));
       } catch (err) {
-        console.error('Error fetching messages:', err)
-        setError('Failed to load messages')
+        console.error('Error fetching messages:', err);
+        setError('Failed to load messages');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchMessages()
-  }, [chatId])
+    fetchMessages();
+  }, [chatId]);
 
-  // Function to send a new message -- not working, will implement web sockets
   const sendMessage = async (content: string) => {
     try {
       await backend.post(`/chat/send`, {
         groupId: chatId,
         senderId: "67be7407f0ae91e0663e4332",
         message: content,
-      })
+      });
 
-      // Refresh chat after sending a message
-      const response = await backend.get(`/chat/${chatId}`)
-      setChatMessages(response.data)
+      const response = await backend.get(`/chat/${chatId}`);
+      setChatMessages(tryMergeAllMessages(response.data));
     } catch (err) {
-      console.error('Error sending message:', err)
+      console.error('Error sending message:', err);
     }
-  }
+  };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />
+    return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   if (error) {
-    return <Text style={styles.errorText}>{error}</Text>
+    return <Text style={styles.errorText}>{error}</Text>;
   }
 
   return (
@@ -71,13 +134,13 @@ export default function SingleChatScreen() {
             contentContainerStyle={styles.list} 
             data={chatMessages}
             renderItem={({ item }) => <ChatMessage Message={item} />}
-            keyExtractor={(item) => item._id}
+            keyExtractor={(item, idx) => idx.toString()}
           />
           <ChatSendBox sendMessage={sendMessage} />
         </View>
       </View>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -128,4 +191,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
-})
+});
