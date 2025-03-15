@@ -19,7 +19,6 @@ router.get("/:groupId", async (req, res) => {
 
 // Get all study groups a user is in
 router.get("/user/:userId", async (req, res) => {
-  console.log("WHAHAHAHA")
   const { userId } = req.params
 
   try {
@@ -83,7 +82,7 @@ router.post("/add", authMiddleware, async (req, res) => {
 })
 
 // Add a user to a study group
-router.post("/join", authMiddleware, async (req, res) => {
+router.post("/join", async (req, res) => {
   const { studyGroupId, userId } = req.body
 
   try {
