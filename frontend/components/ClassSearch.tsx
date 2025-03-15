@@ -16,10 +16,10 @@ const ClassSearch: React.FC<ClassSearchProps> = ({ onSearch }) => {
 
     return (
         <View style={styles.container}>
-            <Icon name="search" size={20} style={styles.icon}/>
+            <Icon name="search" size={20} style={styles.icon} />
             <TextInput
                 style={styles.input}
-                placeholder="Search..."
+                placeholder="Search all classes..."
                 placeholderTextColor="gray"
                 value={searchText}
                 onChangeText={handleInputChange}
@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         height: 40,
         padding: 10,
-        marginLeft: 5,
-        marginRight: 5,
+        marginLeft: 10,
+        marginRight: 10,
         marginTop: 5
     },
     icon: {

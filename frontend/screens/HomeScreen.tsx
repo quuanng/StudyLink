@@ -14,7 +14,7 @@ export default function HomeScreen() {
 
   const data = [
     { id: '1', className: 'CSCI 1133', members: 27, icon: "" },
-    { id: '2', className: 'CSCI 1933', members: 30, icon: ""},
+    { id: '2', className: 'CSCI 1933', members: 30, icon: "" },
     { id: '3', className: 'CSCI 2021', members: 33, icon: "" },
     { id: '4', className: 'MATH 1371', members: 87, icon: "" },
     { id: '5', className: 'STAT 3021', members: 49, icon: "" }
@@ -23,14 +23,14 @@ export default function HomeScreen() {
   const renderItem = ({ item }: { item: Item }) => (
     <ClassEntry className={item.className} members={item.members} icon={item.icon} />
   );
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState(data);
 
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    if (text.trim() === ''){
+    if (text.trim() === '') {
       setFilteredData(data);
     } else {
       const filtered = data.filter(item =>
@@ -42,14 +42,14 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ClassSearch onSearch={handleSearch}/>
+      <ClassSearch onSearch={handleSearch} />
       <FlatList
-          data={filteredData}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.flatList}
+        data={filteredData}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.flatList}
       />
     </View>
   )
