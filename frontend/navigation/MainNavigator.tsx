@@ -9,13 +9,15 @@ import ClassesScreen from '../screens/ClassesScreen'
 import ChatsScreen from '../screens/ChatsScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import SingleChatScreen from '../screens/SingleChatScreen'
+import ClassViewScreen from '../screens/ClassViewScreen'
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 
 export type RootStackParamList = {
   MainTabs: undefined,
-  SingleChatScreen: { chatId: string }
+  SingleChatScreen: { chatId: string },
+  ClassViewScreen: { className: string; members: number; instructor: string; }
 }
 
 function TabNavigator() {
@@ -55,6 +57,8 @@ export default function MainNavigator() {
         <Stack.Screen name="MainTabs" component={TabNavigator} />
 
         <Stack.Screen name="SingleChatScreen" component={SingleChatScreen} />
+
+        <Stack.Screen name="ClassViewScreen" component={ClassViewScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   )

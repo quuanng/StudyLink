@@ -15,6 +15,19 @@ export default function ChatsScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const isToday = date.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); // Example: "3:45 PM"
+    } else {
+      return date.toLocaleDateString([], { month: "short", day: "numeric" }); // Example: "Feb 27"
+    }
+  };
+
   useEffect(() => {
     const fetchStudyGroups = async () => {
       try {
@@ -50,7 +63,7 @@ export default function ChatsScreen() {
             id={item.id} 
             title={item.title} 
             lastMessage={item.lastMessage} 
-            lastDate={item.lastDate ? item.lastDate.split("T")[0] : "No Date"} 
+            lastDate={item.lastDate ? formatTimestamp(item.lastDate) : ""} 
           />
         )}
         keyExtractor={(item) => item.id}
