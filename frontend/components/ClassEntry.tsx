@@ -1,14 +1,22 @@
+import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
+import { RootStackParamList } from '../navigation/MainNavigator';
+import { useNavigation } from '@react-navigation/native';
 
 interface ClassProps {
     className: string;
     members: number;
     icon: string;
+    joined: boolean;
+    screen: "home" | "classes";
 }
 
-const ClassEntry: React.FC<ClassProps> = ({ className, members, icon }) => {
+const ClassEntry: React.FC<ClassProps> = ({ className, members, icon, joined, screen }) => {
+
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
+
     return (
         <View style={styles.item}>
             {/*tl text*/}
@@ -22,8 +30,12 @@ const ClassEntry: React.FC<ClassProps> = ({ className, members, icon }) => {
                 <Text style={styles.bottomText}>{members}</Text>
 
                 {/*br button*/}
-                <TouchableOpacity style={styles.button}>
-                    <Text style={styles.buttonText}>Join</Text>
+                <TouchableOpacity
+                    disabled={joined && screen == "classes"} style={styles.button}
+                    onPress={() => {
+                        if (joined) { navigation.navigate('ClassViewScreen', { className: className, members: members, instructor: "Unknown Instructor" }) }
+                    }}>
+                    <Text style={styles.buttonText}>{joined ? (screen == "classes" ? "Joined" : "View") : "Join"}</Text>
                 </TouchableOpacity>
             </View>
         </View>
