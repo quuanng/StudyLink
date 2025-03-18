@@ -43,6 +43,7 @@ router.get("/courses", async (req, res) => {
     const courses = await ClassModel.find(query)
       .sort({ count: -1 }) // Sort by COUNT in descending order
       .limit(20) // Limit results to top 20
+    console.log(courses)
 
     res.json(courses)
   } catch (error) {

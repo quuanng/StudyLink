@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, FlatList } from 'react-native'
-import ClassEntry from '../components/ClassEntry';
-import ClassSearch from '../components/ClassSearch';
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
+import ClassEntry from '../components/ClassEntry'
+import ClassSearch from '../components/ClassSearch'
+import backend from '../backend'
 
 export interface ClassEntryItem {
   id: string;
@@ -12,34 +13,88 @@ export interface ClassEntryItem {
 }
 
 export default function ClassesScreen() {
+  const [classes, setClasses] = useState<ClassEntryItem[]>([])
+  const [filteredData, setFilteredData] = useState<ClassEntryItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const data = [
-    { id: '1', className: 'CSCI 1133', members: 27, icon: "", joined: true },
-    { id: '2', className: 'CSCI 1933', members: 30, icon: "", joined: false },
-    { id: '3', className: 'CSCI 2021', members: 33, icon: "", joined: false },
-    { id: '4', className: 'MATH 1371', members: 87, icon: "", joined: false },
-    { id: '5', className: 'STAT 3021', members: 49, icon: "", joined: true }
-  ];
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await backend.get(`/class/courses`)
+        
+        // Transform API response to match ClassEntryItem
+        const formattedClasses = response.data.map((course: any) => ({
+          id: course._id,
+          className: course.full_name,
+          members: course.count,
+          icon: "",
+          joined: false
+        }))
+  
+        setClasses(formattedClasses)
+        setFilteredData(formattedClasses)
+      } catch (err) {
+        console.error('Error fetching classes:', err)
+        setError('Failed to load classes')
+      } finally {
+        setLoading(false)
+      }
+    }
+  
+    fetchClasses()
+  }, [])
 
-  const renderItem = ({ item }: { item: ClassEntryItem }) => (
-    <ClassEntry className={item.className} members={item.members} icon={item.icon} joined={item.joined} screen={"classes"}/>
-  );
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState(data);
-
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
+  const handleSearch = async (text: string) => {
+    setSearchQuery(text)
+  
     if (text.trim() === '') {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter(item =>
-        item.className.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredData(filtered);
+      setFilteredData(classes) // Reset to initial 20 courses
+      return
+    }
+  
+    try {
+      const response = await backend.get(`/class/courses?search=${text}`)
+      const searchedClasses = response.data.map((course: any) => ({
+        id: course._id,
+        className: course.full_name,
+        members: course.count,
+        icon: "",
+        joined: false
+      }))
+  
+      setFilteredData(searchedClasses)
+    } catch (error) {
+      console.error('Error searching classes:', error)
     }
   }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    )
+  }
+
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    )
+  }
+
+  const renderItem = ({ item }: { item: ClassEntryItem }) => (
+    <ClassEntry 
+      className={item.className} 
+      members={item.members} 
+      icon={item.icon} 
+      joined={item.joined} 
+      screen={"classes"} 
+    />
+  )
 
   return (
     <View style={styles.container}>
@@ -69,4 +124,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-});
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+})
