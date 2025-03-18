@@ -4,12 +4,12 @@ import { Alert } from 'react-native'
 import { API_URL } from '../config.ts' 
 
 interface Message {
-  _id: string
-  groupId: string
-  senderId: string
-  senderName: string
-  message: string
-  createdAt: string
+  _id: string;
+  groupId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: string;
 }
 
 interface ChatContextType {
@@ -64,7 +64,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         senderId,
         senderName,
         message,
-        createdAt: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
     }
 
     socket.emit('sendMessage', newMessage)

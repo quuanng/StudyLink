@@ -18,6 +18,54 @@ export interface MergedChatMessageData {
   readBy: string[][]
 }
 
+// Merge consecutive messages from the same sender if sent within 5 minutes.
+const tryMergeAllMessages = (
+  rawMessages: Array<{ _id: string; groupId: string; senderId: string; senderName: string; message: string; timestamp: string; }>
+): MergedChatMessageData[] => {
+  const sortedByTimestamp = [...rawMessages].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
+  let output: MergedChatMessageData[] = []
+  let curMergedMessage: MergedChatMessageData = {
+    _ids: [],
+    groupId: "",
+    senderId: "",
+    senderName: "",
+    messages: [],
+    timestamps: [],
+    readBy: [] 
+  }
+
+  sortedByTimestamp.forEach(msg => {
+    const lastTimestamp = curMergedMessage.timestamps.length > 0
+      ? Date.parse(curMergedMessage.timestamps[curMergedMessage.timestamps.length - 1])
+      : 0
+    const timeSincePreviousMessageMs = Date.parse(msg.timestamp) - lastTimestamp
+
+    if (curMergedMessage._ids.length > 0 && (timeSincePreviousMessageMs > 300000 || msg.senderId !== curMergedMessage.senderId)) {
+      output.push(curMergedMessage)
+      curMergedMessage = {
+        _ids: [],
+        groupId: "",
+        senderId: "",
+        senderName: "",
+        messages: [],
+        timestamps: [],
+        readBy: []
+      }
+    }
+    curMergedMessage._ids.push(msg._id)
+    curMergedMessage.groupId = msg.groupId
+    curMergedMessage.senderId = msg.senderId
+    curMergedMessage.senderName = msg.senderName
+    curMergedMessage.messages.push(msg.message)
+    curMergedMessage.timestamps.push(msg.timestamp)
+  })
+
+  if (curMergedMessage._ids.length > 0) {
+    output.push(curMergedMessage)
+  }
+  return output
+}
+
 export default function SingleChatScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
   const route = useRoute()
@@ -26,68 +74,32 @@ export default function SingleChatScreen() {
   // Use ChatContext for real-time messaging
   const { messages, joinGroup, sendMessage: socketSendMessage } = useChat()
 
-  // Filter messages that belong to the current chat (room)
-  const chatMessages = messages.filter((msg) => msg.groupId === chatId)
-
-  const [loading, setLoading] = useState(true);
+  // Local state for historical messages fetched via HTTP
+  const [historicalMessages, setHistoricalMessages] = useState<
+    Array<{ _id: string; groupId: string; senderId: string; senderName: string; message: string; timestamp: string; }>
+  >([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Merge consecutive messages from the same sender (if within 5 minutes)
-  const tryMergeAllMessages = (rawMessages: Array<{ _id: string; groupId: string; senderId: string; senderName: string; message: string; createdAt: string; }>): MergedChatMessageData[] => {
-    const sortedByTimestamp = [...rawMessages].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
-    let output: MergedChatMessageData[] = []
-    let curMergedMessage: MergedChatMessageData = {
-      _ids: [],
-      groupId: "",
-      senderId: "",
-      senderName: "",
-      messages: [],
-      timestamps: [],
-      readBy: [] // Not used in this example
-    }
+  // Filter real-time messages belonging to the current chat room
+  const realtimeMessages = messages.filter((msg) => msg.groupId === chatId)
 
-    sortedByTimestamp.forEach(msg => {
-      const lastTimestamp = curMergedMessage.timestamps.length > 0
-        ? Date.parse(curMergedMessage.timestamps[curMergedMessage.timestamps.length - 1])
-        : 0
-      const timeSincePreviousMessageMs = Date.parse(msg.createdAt) - lastTimestamp;
+  // Combine historical and real-time messages
+  const combinedMessages = [...historicalMessages, ...realtimeMessages]
+  // Deduplicate messages based on _id
+  const uniqueMessages = combinedMessages.filter((msg, index, self) =>
+    index === self.findIndex((m) => m._id === msg._id)
+  )
+  
+  const mergedChatMessages = tryMergeAllMessages(uniqueMessages)
 
-      // If more than 5 minutes have passed or a different sender sends a message,
-      // push the current merged message and start a new one.
-      if (curMergedMessage._ids.length > 0 && (timeSincePreviousMessageMs > 300000 || msg.senderId !== curMergedMessage.senderId)) {
-        output.push(curMergedMessage);
-        curMergedMessage = {
-          _ids: [],
-          groupId: "",
-          senderId: "",
-          senderName: "",
-          messages: [],
-          timestamps: [],
-          readBy: []
-        }
-      }
-      curMergedMessage._ids.push(msg._id);
-      curMergedMessage.groupId = msg.groupId;
-      curMergedMessage.senderId = msg.senderId;
-      curMergedMessage.senderName = msg.senderName;
-      curMergedMessage.messages.push(msg.message);
-      curMergedMessage.timestamps.push(msg.createdAt);
-    })
-
-    if (curMergedMessage._ids.length > 0) {
-      output.push(curMergedMessage)
-    }
-    return output
-  }
-
-  // Join the chat room and fetch initial messages (if needed)
+  // Join the chat room and fetch historical messages
   useEffect(() => {
     joinGroup(chatId)
     const fetchMessages = async () => {
       try {
-        await backend.get(`/chat/${chatId}`)
-        // Optionally, you can process the HTTP-fetched messages
-        // and integrate them into your ChatContext state if desired.
+        const response = await backend.get(`/chat/${chatId}`)
+        setHistoricalMessages(response.data)
       } catch (err) {
         console.error('Error fetching messages:', err)
         setError('Failed to load messages')
@@ -95,8 +107,10 @@ export default function SingleChatScreen() {
         setLoading(false)
       }
     }
-    fetchMessages();
-  }, [chatId, joinGroup])
+    fetchMessages()
+    // We intentionally want to call joinGroup only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId])
 
   // Handler to send a message via the socket
   const handleSendMessage = (content: string) => {
@@ -112,8 +126,6 @@ export default function SingleChatScreen() {
   if (error) {
     return <Text style={styles.errorText}>{error}</Text>
   }
-
-  const mergedChatMessages = tryMergeAllMessages(chatMessages)
 
   return (
     <SafeAreaView style={styles.safeArea}>
