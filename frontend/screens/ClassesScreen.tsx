@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
 import ClassEntry from '../components/ClassEntry'
 import ClassSearch from '../components/ClassSearch'
@@ -18,21 +18,20 @@ export default function ClassesScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
     const fetchClasses = async () => {
       try {
         const response = await backend.get(`/class/courses`)
-        
-        // Transform API response to match ClassEntryItem
         const formattedClasses = response.data.map((course: any) => ({
           id: course._id,
           className: course.full_name,
           members: course.count,
-          icon: "",
-          joined: false
+          icon: '',
+          joined: false,
         }))
-  
+
         setClasses(formattedClasses)
         setFilteredData(formattedClasses)
       } catch (err) {
@@ -42,32 +41,46 @@ export default function ClassesScreen() {
         setLoading(false)
       }
     }
-  
+
     fetchClasses()
   }, [])
 
-  const handleSearch = async (text: string) => {
-    setSearchQuery(text)
-  
-    if (text.trim() === '') {
-      setFilteredData(classes) // Reset to initial 20 courses
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false // Mark first render as done
       return
     }
-  
+
+    const delaySearch = setTimeout(() => {
+      if (searchQuery.trim() === '') {
+        setFilteredData(classes) // Reset to original fetched data
+      } else {
+        fetchSearchedClasses(searchQuery)
+      }
+    }, 500) // Delay api call half second
+
+    return () => clearTimeout(delaySearch)
+  }, [searchQuery])
+
+  const fetchSearchedClasses = async (query: string) => {
     try {
-      const response = await backend.get(`/class/courses?search=${text}`)
+      const response = await backend.get(`/class/courses?search=${query}`)
       const searchedClasses = response.data.map((course: any) => ({
         id: course._id,
         className: course.full_name,
         members: course.count,
-        icon: "",
-        joined: false
+        icon: '',
+        joined: false,
       }))
-  
+
       setFilteredData(searchedClasses)
     } catch (error) {
       console.error('Error searching classes:', error)
     }
+  }
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text) // Update searchQuery state (debounced effect will trigger API call)
   }
 
   if (loading) {
@@ -87,12 +100,12 @@ export default function ClassesScreen() {
   }
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
-    <ClassEntry 
-      className={item.className} 
-      members={item.members} 
-      icon={item.icon} 
-      joined={item.joined} 
-      screen={"classes"} 
+    <ClassEntry
+      className={item.className}
+      members={item.members}
+      icon={item.icon}
+      joined={item.joined}
+      screen={'classes'}
     />
   )
 
@@ -118,7 +131,7 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flexGrow: 1,
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
   },
   row: {
     flex: 1,
