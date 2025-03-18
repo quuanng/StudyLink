@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image, Pressable, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface ChatSendBoxProps {
-    sendMessage: (a: string) => void;
+    sendMessage: (content: string) => void
 }
 
-const charLimit = 255;
-
 const ChatSendBox: React.FC<ChatSendBoxProps> = ({ sendMessage }) => {
-
     const [content, setContent] = useState('')
 
     const onPressSend = () => {
-        sendMessage(content)
-        setContent("")
+        if (content.trim() !== '') {
+            sendMessage(content)
+            setContent('')
+        }
     }
 
     return (
         <View style={styles.container}>
-            <TextInput onChangeText={setContent} value={content} placeholder="Send a message..." style={styles.content_container}>
-
-            </TextInput>
+            <TextInput
+                onChangeText={setContent}
+                value={content}
+                placeholder="Send a message..."
+                style={styles.content_container}
+            />
             <TouchableOpacity style={styles.send_button} onPress={onPressSend}>
-                <Text style={styles.send_label}>
-                    Send
-                </Text>
+                <Text style={styles.send_label}>Send</Text>
             </TouchableOpacity>
         </View>
     )
@@ -32,12 +32,12 @@ const ChatSendBox: React.FC<ChatSendBoxProps> = ({ sendMessage }) => {
 
 const styles = StyleSheet.create({
     container: {
-        position: "absolute",
+        position: 'absolute',
         bottom: 15,
         left: 25,
         right: 25,
         height: 40,
-        backgroundColor: "#f2f2f2",
+        backgroundColor: '#f2f2f2',
         borderColor: '#D9D9D9',
         borderWidth: 1,
         flexDirection: 'row',
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     send_label: {
         color: '#007AFF',
         fontSize: 16,
-    }
+    },
 })
 
 export default ChatSendBox

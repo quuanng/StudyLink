@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, FlatList } from 'react-native'
-import ClassEntry from '../components/ClassEntry';
-import ClassSearch from '../components/ClassSearch';
+import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
+import ClassEntry from '../components/ClassEntry'
+import ClassSearch from '../components/ClassSearch'
+import backend from '../backend'
 
 export interface ClassEntryItem {
   id: string;
@@ -12,34 +13,101 @@ export interface ClassEntryItem {
 }
 
 export default function ClassesScreen() {
+  const [classes, setClasses] = useState<ClassEntryItem[]>([])
+  const [filteredData, setFilteredData] = useState<ClassEntryItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const isFirstRender = useRef(true)
 
-  const data = [
-    { id: '1', className: 'CSCI 1133', members: 27, icon: "", joined: true },
-    { id: '2', className: 'CSCI 1933', members: 30, icon: "", joined: false },
-    { id: '3', className: 'CSCI 2021', members: 33, icon: "", joined: false },
-    { id: '4', className: 'MATH 1371', members: 87, icon: "", joined: false },
-    { id: '5', className: 'STAT 3021', members: 49, icon: "", joined: true }
-  ];
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await backend.get(`/class/courses`)
+        const formattedClasses = response.data.map((course: any) => ({
+          id: course._id,
+          className: course.full_name,
+          members: course.count,
+          icon: '',
+          joined: false,
+        }))
 
-  const renderItem = ({ item }: { item: ClassEntryItem }) => (
-    <ClassEntry className={item.className} members={item.members} icon={item.icon} joined={item.joined} screen={"classes"}/>
-  );
+        setClasses(formattedClasses)
+        setFilteredData(formattedClasses)
+      } catch (err) {
+        console.error('Error fetching classes:', err)
+        setError('Failed to load classes')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState(data);
+    fetchClasses()
+  }, [])
 
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false // Mark first render as done
+      return
+    }
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter(item =>
-        item.className.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredData(filtered);
+    const delaySearch = setTimeout(() => {
+      if (searchQuery.trim() === '') {
+        setFilteredData(classes) // Reset to original fetched data
+      } else {
+        fetchSearchedClasses(searchQuery)
+      }
+    }, 500) // Delay api call half second
+
+    return () => clearTimeout(delaySearch)
+  }, [searchQuery])
+
+  const fetchSearchedClasses = async (query: string) => {
+    try {
+      const response = await backend.get(`/class/courses?search=${query}`)
+      const searchedClasses = response.data.map((course: any) => ({
+        id: course._id,
+        className: course.full_name,
+        members: course.count,
+        icon: '',
+        joined: false,
+      }))
+
+      setFilteredData(searchedClasses)
+    } catch (error) {
+      console.error('Error searching classes:', error)
     }
   }
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text) // Update searchQuery state (debounced effect will trigger API call)
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    )
+  }
+
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    )
+  }
+
+  const renderItem = ({ item }: { item: ClassEntryItem }) => (
+    <ClassEntry
+      className={item.className}
+      members={item.members}
+      icon={item.icon}
+      joined={item.joined}
+      screen={'classes'}
+    />
+  )
 
   return (
     <View style={styles.container}>
@@ -63,10 +131,21 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flexGrow: 1,
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
   },
   row: {
     flex: 1,
     justifyContent: 'space-between',
   },
-});
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+})
