@@ -93,7 +93,9 @@ router.post("/join", async (req, res) => {
     }
 
     // Check if the user is already a member
-    const isAlreadyMember = studyGroup.members.some(member => member.userId === userId)
+    const isAlreadyMember = studyGroup.members.some(
+      member => member.userId.toString() === userId.toString()
+    )
     if (isAlreadyMember) {
       return res.status(400).json({ error: "User is already a member of the study group" })
     }
@@ -118,7 +120,7 @@ router.post("/join", async (req, res) => {
 })
 
 // Remove a user from a study group
-router.delete("/:studyGroupId/member/:userId", authMiddleware, async (req, res) => {
+router.delete("/:studyGroupId/member/:userId", async (req, res) => {
   const { studyGroupId, userId } = req.params
   const { requesterId } = req.body // Requester performing the action
 
@@ -130,6 +132,7 @@ router.delete("/:studyGroupId/member/:userId", authMiddleware, async (req, res) 
     }
 
     // Check if the requester is authorized (either the user themselves or the creator)
+    console.log(requesterId, " ", userId)
     const isRequesterAuthorized =
       requesterId === userId || requesterId === studyGroup.creatorId
     if (!isRequesterAuthorized) {
@@ -137,7 +140,7 @@ router.delete("/:studyGroupId/member/:userId", authMiddleware, async (req, res) 
     }
 
     // Check if the user is a member of the study group
-    const memberIndex = studyGroup.members.findIndex(member => member.userId === userId)
+    const memberIndex = studyGroup.members.findIndex(member => member.userId == userId)
     if (memberIndex === -1) {
       return res.status(404).json({ error: "User is not a member of the study group" })
     }
