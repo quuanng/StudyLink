@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { View, Text, StyleSheet, FlatList, Button, SafeAreaView, ActivityIndicator } from 'react-native'
 import ChatMessage from '../components/ChatMessage'
 import { useNavigation, useRoute } from '@react-navigation/native'
@@ -7,6 +7,7 @@ import { RootStackParamList } from '../navigation/MainNavigator'
 import ChatSendBox from '../components/ChatSendBox'
 import { useChat } from '../context/ChatContext'
 import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 export interface MergedChatMessageData {
   _ids: string[]
@@ -71,6 +72,9 @@ export default function SingleChatScreen() {
   const route = useRoute()
   const { chatId } = route.params as { chatId: string }
 
+  // Use AuthContext to get logged-in user info
+  const { user } = useContext(AuthContext)
+
   // Use ChatContext for real-time messaging
   const { messages, joinGroup, sendMessage: socketSendMessage } = useChat()
 
@@ -114,9 +118,13 @@ export default function SingleChatScreen() {
 
   // Handler to send a message via the socket
   const handleSendMessage = (content: string) => {
-    const senderId = "67be7407f0ae91e0663e4332" // Replace with the logged-in user ID
-    const senderName = "Me" // Replace with the actual user name
-    socketSendMessage(chatId, senderId, senderName, content)
+    // Use the logged in user's info if available
+    if (user) {
+      socketSendMessage(chatId, user.id, user.name, content)
+    } else {
+      // Fallback behavior (if needed)
+      console.warn("User is not logged in; message not sent")
+    }
   }
 
   if (loading) {

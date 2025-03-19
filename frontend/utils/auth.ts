@@ -1,4 +1,5 @@
 import EncryptedStorage from 'react-native-encrypted-storage'
+import backend from '../backend.ts'
 
 /**
  * Stores the JWT token securely.
@@ -31,35 +32,30 @@ export const getToken = async (): Promise<string | null> => {
  */
 export const deleteToken = async (): Promise<void> => {
   try {
-    await EncryptedStorage.removeItem('userToken')
+    const token = await EncryptedStorage.getItem('userToken')
+    if (token) {
+      await EncryptedStorage.removeItem('userToken')
+    }
   } catch (error) {
     console.error('Error deleting token:', error)
-    throw new Error('Failed to delete token.')
   }
 }
 
+
 /**
- * Validates the token with the backend (optional).
+ * Validates the token with the backend.
  * @param token - The token to validate.
- * @param backendUrl - The backend validation endpoint.
  * @returns The user data if the token is valid.
  */
-export const validateToken = async (token: string, backendUrl: string): Promise<any> => {
+export const validateToken = async (token: string): Promise<any> => {
   try {
-    const response = await fetch(`${backendUrl}/login/me`, {
-      method: 'GET',
+    const response = await backend.get('/login/me', {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     })
-
-    if (!response.ok) {
-      throw new Error('Token validation failed')
-    }
-
-    const data = await response.json()
-    return data.user
+    return response.data.user
   } catch (error) {
     console.error('Error validating token:', error)
     return null
