@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "ios": "cd frontend && npm run ios",
+    "backend": "cd backend && npm run dev",
+    "ios-dev": "concurrently \"npm run ios\" \"npm run backend\""
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
