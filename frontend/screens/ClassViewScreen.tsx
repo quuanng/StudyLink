@@ -3,12 +3,22 @@ import { View, Text, StyleSheet, Button, SafeAreaView, FlatList } from 'react-na
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
+import ClassGroupEntry, { ChatGroupEntryProps } from '../components/ClassGroupEntry';
 
 const ClassViewScreen = () => {
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
   const { className, members, instructor } = route.params as { className: string; members: number; instructor: string; };
+
+  const dummyStudyGroups: ChatGroupEntryProps[] = [{
+    title: "Homework 1 Meetup",
+    timestamp: "2025-03-25T12:34:56.789Z",
+    location: "HSEC Floor 3 Commons",
+    maxStudents: 50,
+    isPrivate: false,
+    memberCount: 15
+  }]
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -20,10 +30,21 @@ const ClassViewScreen = () => {
               <Text style={styles.chat_title}>{className} | {members} Members</Text>
             </View>
           </View>
-          <View 
+          <View
             style={styles.list} >
-                <Text>Welcome to the class! Browse for study groups here.</Text>
-            </View>
+            <Text>Welcome to the class! Browse for study groups here.</Text>
+          </View>
+
+          <FlatList
+            contentContainerStyle={styles.list}
+            data={dummyStudyGroups}
+            renderItem={({ item }) => (
+              <ClassGroupEntry
+                title={item.title} timestamp={item.timestamp} location={item.location} maxStudents={item.maxStudents} isPrivate={item.isPrivate} memberCount={item.memberCount}
+              />
+            )}
+            keyExtractor={(item) => item.timestamp}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -36,15 +57,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   background: {
-    backgroundColor:'#ffffff',
-    width:'100%',
-    height:'100%',
+    backgroundColor: '#ffffff',
+    width: '100%',
+    height: '100%',
   },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor:'#f2f2f2',
+    backgroundColor: '#f2f2f2',
   },
   head_container: {
     height: 50,
