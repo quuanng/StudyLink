@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native'
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RootStackParamList } from '../navigation/MainNavigator'
+import Icon from 'react-native-vector-icons/Octicons';
 import ClockSvg from '../assets/ClockSvg.svg'
 
 export interface ChatGroupEntryProps {
@@ -42,10 +43,11 @@ const ChatGroupEntry: React.FC<ChatGroupEntryProps> = ({ title, timestamp, locat
                 <View style={styles.text_parent_container}>
                     <View style={styles.text_headline_container}>
                         <Text style={styles.text_headline_group_name}>{title}</Text>
-                        <ClockSvg width={200} height={200} /><Text style={styles.text_headline_last_date}>{formattedDate}</Text>
+                        <Text style={styles.text_headline_last_date}>{formattedDate}</Text>
                     </View>
                     <View style={styles.text_body_container}>
-                        <Text style={styles.body_label}>{"No messages yet"}</Text>
+                        <Icon name="globe" size={20} color="black" />
+                        <Text style={styles.body_label}>{" Open to Anyone"}</Text>
                     </View>
                 </View>
             </View>
@@ -98,9 +100,9 @@ const styles = StyleSheet.create({
         color: '#696969'
     },
     text_body_container: {
-        flex: 0.7,
-        fontSize: 14,
-        paddingRight: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 4,
     },
     body_label: {
         color: '#696969'
