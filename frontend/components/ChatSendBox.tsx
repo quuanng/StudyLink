@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
 
 interface ChatSendBoxProps {
     sendMessage: (content: string) => void
@@ -17,48 +18,68 @@ const ChatSendBox: React.FC<ChatSendBoxProps> = ({ sendMessage }) => {
 
     return (
         <View style={styles.container}>
-            <TextInput
-                onChangeText={setContent}
-                value={content}
-                placeholder="Send a message..."
-                style={styles.content_container}
-            />
-            <TouchableOpacity style={styles.send_button} onPress={onPressSend}>
-                <Text style={styles.send_label}>Send</Text>
-            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+                <TextInput
+                    onChangeText={setContent}
+                    value={content}
+                    placeholder="Message"
+                    placeholderTextColor="#999999"
+                    style={styles.input}
+                    multiline
+                />
+                <TouchableOpacity 
+                    style={[styles.sendButton, !content.trim() && styles.sendButtonDisabled]} 
+                    onPress={onPressSend}
+                    disabled={!content.trim()}
+                >
+                    <Icon 
+                        name="send" 
+                        size={20} 
+                        color={content.trim() ? '#007AFF' : '#999999'} 
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        position: 'absolute',
-        bottom: 15,
-        left: 25,
-        right: 25,
-        height: 40,
-        backgroundColor: '#f2f2f2',
-        borderColor: '#D9D9D9',
-        borderWidth: 1,
-        flexDirection: 'row',
-        borderRadius: 100,
+        backgroundColor: '#ffffff',
+        borderTopWidth: 1,
+        borderTopColor: '#e5e5e5',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        paddingBottom: Platform.OS === 'ios' ? 24 : 8,
     },
-    content_container: {
-        flex: 0.85,
+    inputContainer: {
         flexDirection: 'row',
-        justifyContent: 'flex-start',
-        paddingHorizontal: 20,
+        alignItems: 'flex-end',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
     },
-    send_button: {
-        flex: 0.15,
-        flexDirection: 'row',
+    input: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333333',
+        maxHeight: 100,
+        minHeight: 36,
+        paddingTop: 8,
+        paddingBottom: 8,
+    },
+    sendButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f0f0f0',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingRight: 15,
+        marginLeft: 8,
     },
-    send_label: {
-        color: '#007AFF',
-        fontSize: 16,
+    sendButtonDisabled: {
+        backgroundColor: '#f5f5f5',
     },
 })
 

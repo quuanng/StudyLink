@@ -136,16 +136,12 @@ export default function ChatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   list: {
     flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 2,
-    gap: 2,
-    flexDirection: 'column',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   errorText: {
     color: 'red',

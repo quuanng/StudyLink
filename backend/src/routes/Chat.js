@@ -11,7 +11,7 @@ router.get("/:groupId", async (req, res) => {
 
   try {
     const chatMessages = await ChatModel.find({ groupId })
-      .sort({ timestamp: 1 })
+      .sort({ timestamp: -1 })
       .lean()
 
     res.status(200).json(chatMessages)

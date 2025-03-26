@@ -23,8 +23,7 @@ export default function HomeScreen() {
         data={test_joined_classes}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
+        numColumns={1}
         contentContainerStyle={styles.flatList}
       />
     </View>
@@ -34,15 +33,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10,
   },
   flatList: {
     flexGrow: 1,
-    paddingHorizontal: 10
-  },
-  row: {
-    flex: 1,
-    justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
 });
 
