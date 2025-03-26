@@ -19,10 +19,10 @@ interface ChatContextType {
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
+const socket = io(`${API_URL}`, { transports: ['websocket'] })
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([])
-  const socket = io(`${API_URL}`, { transports: ['websocket'] })
 
   useEffect(() => {
     // Connect to WebSocket server

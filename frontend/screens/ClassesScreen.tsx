@@ -116,8 +116,7 @@ export default function ClassesScreen() {
         data={filteredData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
+        numColumns={1}
         contentContainerStyle={styles.flatList}
       />
     </View>
@@ -132,10 +131,6 @@ const styles = StyleSheet.create({
   flatList: {
     flexGrow: 1,
     paddingHorizontal: 10,
-  },
-  row: {
-    flex: 1,
-    justifyContent: 'space-between',
   },
   loadingContainer: {
     flex: 1,
