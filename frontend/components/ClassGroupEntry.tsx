@@ -3,52 +3,116 @@ import { useNavigation } from '@react-navigation/native'
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RootStackParamList } from '../navigation/MainNavigator'
-import Icon from 'react-native-vector-icons/Octicons';
-import ClockSvg from '../assets/ClockSvg.svg'
+import Icon from 'react-native-vector-icons/Octicons'
 
-export interface ChatGroupEntryProps {
+export interface ClassGroupEntryProps {
     title: string
     timestamp: string
     location: string
-    maxStudents: Number
+    maxStudents: number
     isPrivate: boolean
-    memberCount: Number
+    memberCount: number
 }
 
-const ChatGroupEntry: React.FC<ChatGroupEntryProps> = ({ title, timestamp, location, memberCount, maxStudents, isPrivate }) => {
+const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
+    title,
+    timestamp,
+    location,
+    memberCount,
+    maxStudents,
+    isPrivate
+}) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
 
-    // TODO: May want to create one single formatTimestamp function to import and re-use
-    const formatTimestamp = (timestamp: string): string => {
-        const fixedTimestamp = timestamp.replace(/:(?=\d{2}$)/, '')
-        const date = new Date(fixedTimestamp)
-        if (isNaN(date.getTime())) {
-            return ''
-        }
+    const calculateDaysUntilMeeting = (timestamp: string): string => {
+        const meetingDate = new Date(timestamp)
+        if (isNaN(meetingDate.getTime())) return ''
+
         const now = new Date()
-        const isToday = date.toDateString() === now.toDateString()
-        return isToday
-            ? date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-            : date.toLocaleDateString([], { month: "short", day: "numeric" })
+        const diffTime = meetingDate.getTime() - now.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays === 0) return 'Meeting today'
+        if (diffDays === 1) return 'Meeting tomorrow'
+        if (diffDays < 0) return 'Meeting passed'
+        return `Meeting in ${diffDays} days`
     }
 
-    const formattedDate = formatTimestamp(timestamp)
+    const meetingText = calculateDaysUntilMeeting(timestamp)
 
     return (
         <Pressable
             style={styles.container}
-            disabled={true}
+            onPress={() => {/* Handle navigation */ }}
         >
-            <View style={styles.sub_container}>
-                <View style={styles.text_parent_container}>
-                    <View style={styles.text_headline_container}>
-                        <Text style={styles.text_headline_group_name}>{title}</Text>
-                        <Text style={styles.text_headline_last_date}>{formattedDate}</Text>
+            <View style={styles.contentContainer}>
+                <View style={styles.headerContainer}>
+                    <Text style={styles.title} numberOfLines={1}>{title}</Text>
+                    <View style={styles.memberCount}>
+                        <Icon name="people" size={16} color="#666" />
+                        <Text style={styles.memberCountText}>
+                            {memberCount}/{maxStudents}
+                        </Text>
                     </View>
-                    <View style={styles.text_body_container}>
-                        <Icon name="globe" size={20} color="black" />
-                        <Text style={styles.body_label}>{" Open to Anyone"}</Text>
+                </View>
+
+                <View style={styles.mainContentRow}>
+                    <View style={styles.infoContainer}>
+                        <View style={styles.iconRow}>
+                            <View style={styles.iconContainer}>
+                                <View style={styles.iconWrapper}>
+                                    <Icon
+                                        name={isPrivate ? "lock" : "globe"}
+                                        size={16}
+                                        color="#666"
+                                        style={{ marginLeft: 1 }}
+                                    />
+                                </View>
+                                <Text style={styles.infoText}>
+                                    {isPrivate ? "Request Only" : "Open to Anyone"}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.iconRow}>
+                            <View style={styles.iconContainer}>
+                                <View style={styles.iconWrapper}>
+                                    <Icon
+                                        name="clock"
+                                        size={16}
+                                        color="#666"
+                                    />
+                                </View>
+                                <Text style={styles.infoText}>{meetingText}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.iconRow}>
+                            <View style={styles.iconContainer}>
+                                <View style={styles.iconWrapper}>
+                                    <Icon
+                                        name="location"
+                                        size={16}
+                                        color="#666"
+                                        style={{ marginLeft: 1 }}
+                                    />
+                                </View>
+                                <Text style={styles.infoText} numberOfLines={1}>{location}</Text>
+                            </View>
+                        </View>
                     </View>
+
+                    <Pressable
+                        style={[
+                            styles.joinButton,
+                            isPrivate && styles.requestButton
+                        ]}
+                        onPress={() => {/* Handle join/request */ }}
+                    >
+                        <Text style={styles.joinButtonText}>
+                            {isPrivate ? "Request" : "Join"}
+                        </Text>
+                    </Pressable>
                 </View>
             </View>
         </Pressable>
@@ -57,56 +121,97 @@ const ChatGroupEntry: React.FC<ChatGroupEntryProps> = ({ title, timestamp, locat
 
 const styles = StyleSheet.create({
     container: {
-        aspectRatio: 400 / 80,
         backgroundColor: '#ffffff',
-        borderRadius: 5,
-        width: '100%',
+        borderRadius: 12,
+        width: '95%',
+        marginVertical: 6,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
+        elevation: 5,
+        alignSelf: 'center',
     },
-    sub_container: {
-        flex: 1,
+    contentContainer: {
+        padding: 12,
+    },
+    headerContainer: {
         flexDirection: 'row',
-        paddingHorizontal: 7,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
     },
-    icon_container: {
-        flex: 68 / 400,
-        alignContent: 'center',
-        justifyContent: 'center',
-    },
-    placeholder_icon: {
-        flex: 5 / 10,
-        aspectRatio: 1,
-        margin: 'auto',
-        borderRadius: 100,
-        backgroundColor: '#D9D9D9'
-    },
-    text_parent_container: {
-        flex: 1,
-        flexDirection: 'column',
-    },
-    text_headline_container: {
-        paddingTop: 8,
-        flex: 0.3,
+    title: {
         fontSize: 16,
-        flexDirection: 'row',
+        fontWeight: '600',
+        color: '#1a1a1a',
+        flex: 1,
+        marginRight: 12,
     },
-    text_headline_group_name: {
-        flex: 0.7,
-        textAlign: 'left',
-    },
-    text_headline_last_date: {
-        flex: 0.3,
-        textAlign: 'right',
-        paddingRight: 0,
-        color: '#696969'
-    },
-    text_body_container: {
+    memberCount: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingTop: 4,
+        backgroundColor: '#f5f5f5',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
     },
-    body_label: {
-        color: '#696969'
+    memberCountText: {
+        marginLeft: 4,
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+    },
+    mainContentRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+    },
+    infoContainer: {
+        flex: 1,
+        marginRight: 16,
+    },
+    iconRow: {
+        marginBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+    },
+    iconWrapper: {
+        width: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    infoText: {
+        fontSize: 13,
+        color: '#666',
+        marginLeft: 8,
+        flex: 1,
+    },
+    joinButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        minWidth: 80,
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+    },
+    requestButton: {
+        backgroundColor: '#FF9500',
+    },
+    joinButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
     },
 })
 
-export default ChatGroupEntry
+export default ClassGroupEntry

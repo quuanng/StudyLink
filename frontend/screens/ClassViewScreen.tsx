@@ -3,47 +3,64 @@ import { View, Text, StyleSheet, Button, SafeAreaView, FlatList } from 'react-na
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
-import ClassGroupEntry, { ChatGroupEntryProps } from '../components/ClassGroupEntry';
+import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry';
 
 const ClassViewScreen = () => {
-
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
   const { className, members, instructor } = route.params as { className: string; members: number; instructor: string; };
 
-  const dummyStudyGroups: ChatGroupEntryProps[] = [{
-    title: "Homework 1 Meetup",
-    timestamp: "2025-03-25T12:34:56.789Z",
-    location: "HSEC Floor 3 Commons",
-    maxStudents: 50,
-    isPrivate: false,
-    memberCount: 15
-  }]
+  const dummyStudyGroups: ClassGroupEntryProps[] = [
+    {
+      title: "Homework 1 Meetup",
+      timestamp: "2024-03-25T12:34:56.789Z",
+      location: "HSEC Floor 3 Commons",
+      maxStudents: 8,
+      isPrivate: false,
+      memberCount: 5
+    },
+    {
+      title: "Final Exam Study Session",
+      timestamp: "2024-04-15T14:00:00.000Z",
+      location: "Library Study Room 204",
+      maxStudents: 6,
+      isPrivate: true,
+      memberCount: 3
+    },
+    {
+      title: "Project Group Discussion",
+      timestamp: "2024-03-28T16:30:00.000Z",
+      location: "Engineering Building Room 302",
+      maxStudents: 5,
+      isPrivate: false,
+      memberCount: 4
+    }
+  ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <View style={styles.container}>
-          <View style={styles.head_container}>
-            <Button title="Back" onPress={() => navigation.goBack()} />
-            <View style={styles.title_container}>
-              <Text style={styles.chat_title}>{className} | {members} Members</Text>
-            </View>
-          </View>
-          <View
-            style={styles.list} >
-            <Text>Welcome to the class! Browse for study groups here.</Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Button title="Back" onPress={() => navigation.goBack()} />
+          <Text style={styles.headerTitle}>{className}</Text>
+          <Text style={styles.memberCount}>{members} Members</Text>
+        </View>
+
+        <View style={styles.contentContainer}>
+
+          <Text style={styles.welcomeText}>Browse Available Study Groups</Text>
 
           <FlatList
-            contentContainerStyle={styles.list}
             data={dummyStudyGroups}
             renderItem={({ item }) => (
-              <ClassGroupEntry
-                title={item.title} timestamp={item.timestamp} location={item.location} maxStudents={item.maxStudents} isPrivate={item.isPrivate} memberCount={item.memberCount}
-              />
+              <ClassGroupEntry {...item} />
             )}
             keyExtractor={(item) => item.timestamp}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No study groups available</Text>
+            }
           />
         </View>
       </View>
@@ -54,51 +71,51 @@ const ClassViewScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  background: {
-    backgroundColor: '#ffffff',
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#f5f5f5',
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f2f2f2',
   },
-  head_container: {
-    height: 50,
+  headerContainer: {
     backgroundColor: '#ffffff',
-    width: "100%",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
-  title_container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  chat_title: {
+  headerTitle: {
     fontSize: 18,
-  },
-  list: {
+    fontWeight: '600',
     flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 2,
-    gap: 2,
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
     textAlign: 'center',
-    marginTop: 20,
+    marginLeft: -40, // Offset for the back button to center the title
+  },
+  memberCount: {
+    fontSize: 14,
+    color: '#666',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  welcomeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 16,
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 32,
+    fontSize: 16,
   },
 });
 
-export default ClassViewScreen
+export default ClassViewScreen;
