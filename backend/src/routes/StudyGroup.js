@@ -2,6 +2,7 @@ import { Router } from "express"
 import { StudyGroupModel } from "../models/StudyGroup.js"
 import { ClassModel } from "../models/Class.js"
 import { ChatModel } from "../models/Chat.js"
+import { UsersModel } from "../models/User.js"
 import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
@@ -170,6 +171,28 @@ router.delete("/:studyGroupId/member/:userId", async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: "Failed to remove user from the study group" })
+  }
+})
+
+// Get all study groups for a specific class
+router.get("/class/:classId", async (req, res) => {
+  try {
+    const { classId } = req.params
+    
+    // Check if the class exists
+    const classExists = await ClassModel.findById(classId)
+    if (!classExists) {
+      return res.status(404).json({ error: "Class not found" })
+    }
+
+    // Get all study groups for this class
+    const studyGroups = await StudyGroupModel.find({classId})
+      .sort({ time: 1 }) // Sort by time in ascending order
+
+    res.status(200).json(studyGroups)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to fetch study groups for the class" })
   }
 })
 
