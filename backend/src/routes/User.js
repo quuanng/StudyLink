@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { UsersModel } from "../models/User.js"
+import { ClassModel } from "../models/Class.js"
 import bcrypt from "bcrypt"
 
 const router = Router()
@@ -74,6 +75,12 @@ router.post("/toggle-class", async (req, res) => {
             return res.status(404).json({ error: "User not found" })
         }
 
+        // Find the class
+        const classDoc = await ClassModel.findById(classId)
+        if (!classDoc) {
+            return res.status(404).json({ error: "Class not found" })
+        }
+
         // Check if class is already saved
         const existingClassIndex = user.classes.findIndex(
             c => c.toString() === classId
@@ -82,17 +89,22 @@ router.post("/toggle-class", async (req, res) => {
         if (existingClassIndex === -1) {
             // Add the class if it's not already saved
             user.classes.push(classId)
+            // Increment saves count
+            classDoc.saves += 1
         } else {
             // Remove the class if it's already saved
             user.classes.splice(existingClassIndex, 1)
+            // Decrement saves count
+            classDoc.saves -= 1
         }
 
-        // Save the updated user
-        await user.save()
+        // Save both the user and class updates
+        await Promise.all([user.save(), classDoc.save()])
 
         res.status(200).json({
             message: existingClassIndex === -1 ? "Class saved successfully" : "Class removed successfully",
-            user
+            user,
+            class: classDoc
         })
     } catch (error) {
         console.error(error)
@@ -100,6 +112,31 @@ router.post("/toggle-class", async (req, res) => {
             return res.status(400).json({ error: "Invalid user or class ID format" })
         }
         res.status(500).json({ error: "Failed to update user's classes" })
+    }
+})
+
+// Get user's saved courses with full class information
+router.get("/:userId/saved-courses", async (req, res) => {
+    const { userId } = req.params
+
+    try {
+        // Find user and populate the classes array with full class information
+        const user = await UsersModel.findById(userId)
+            .populate('classes')
+        
+        if (!user) {
+            return res.status(404).json({ error: "User not found" })
+        }
+
+        res.status(200).json({
+            savedCourses: user.classes
+        })
+    } catch (error) {
+        console.error(error)
+        if (error.kind === "ObjectId") {
+            return res.status(400).json({ error: "Invalid user ID format" })
+        }
+        res.status(500).json({ error: "Failed to fetch user's saved courses" })
     }
 })
 
