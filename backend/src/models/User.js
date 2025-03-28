@@ -5,12 +5,7 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profilePicture: { type: String },
-    classes: [
-      {
-        classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
-        section: { type: String } // User's section within the class
-      }
-    ],
+    classes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
     subscriptionStatus: {
       isActive: { type: Boolean, default: true },
       startDate: { type: Date, default: Date.now },

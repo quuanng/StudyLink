@@ -63,4 +63,44 @@ router.get("/read", async (req, res) => {
     }
 })
 
+// Toggle saving/unsaving a class for a user
+router.post("/toggle-class", async (req, res) => {
+    const { userId, classId } = req.body
+
+    try {
+        // Find the user
+        const user = await UsersModel.findById(userId)
+        if (!user) {
+            return res.status(404).json({ error: "User not found" })
+        }
+
+        // Check if class is already saved
+        const existingClassIndex = user.classes.findIndex(
+            c => c.toString() === classId
+        )
+
+        if (existingClassIndex === -1) {
+            // Add the class if it's not already saved
+            user.classes.push(classId)
+        } else {
+            // Remove the class if it's already saved
+            user.classes.splice(existingClassIndex, 1)
+        }
+
+        // Save the updated user
+        await user.save()
+
+        res.status(200).json({
+            message: existingClassIndex === -1 ? "Class saved successfully" : "Class removed successfully",
+            user
+        })
+    } catch (error) {
+        console.error(error)
+        if (error.kind === "ObjectId") {
+            return res.status(400).json({ error: "Invalid user or class ID format" })
+        }
+        res.status(500).json({ error: "Failed to update user's classes" })
+    }
+})
+
 export default router
