@@ -1,15 +1,15 @@
-FROM node:20
+FROM node:20-slim
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
-RUN npm install
+RUN npm ci --only=production
 
 COPY . .
 
+ENV NODE_ENV=production
 ENV PORT=8240
 
 EXPOSE 8240
 
-CMD ["npm", "run", "dev"]
+CMD ["node", "src/index.js"]

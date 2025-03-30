@@ -34,12 +34,10 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id)
 
   socket.on("joinGroup", (groupId) => {
-    console.log("User joined group:", groupId)
     socket.join(groupId)
   })
 
   socket.on("sendMessage", async (data) => {
-    console.log("Received message:", data)
     const { groupId, senderId, senderName, message } = data
 
     if (!message || message.trim() === "") {
