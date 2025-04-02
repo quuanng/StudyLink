@@ -1,7 +1,8 @@
 // AuthContext.tsx
 import React, { createContext, useState, useEffect, ReactNode } from 'react'
-import { getToken, deleteToken, storeToken } from '../utils/auth'
+import { getAccessToken, getRefreshToken, deleteTokens, storeTokens, refreshAccessToken, validateToken } from '../utils/auth'
 import backend from '../backend'
+import { AxiosError } from 'axios'
 
 export interface AuthUser {
   id: string
@@ -11,7 +12,7 @@ export interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (userData: AuthUser, token: string) => void
+  login: (userData: AuthUser, accessToken: string, refreshToken: string) => void
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -28,19 +29,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Attempt to refresh the user from a stored token on mount
   const refreshUser = async () => {
-    const token = await getToken()
-    if (token) {
-      try {
-        // Assume we have an endpoint to fetch the user from a token
-        const response = await backend.get('/login/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        setUser(response.data.user)
-      } catch (error) {
-        console.error('Error fetching user from token:', error)
-        await deleteToken()
-        setUser(null)
+    const accessToken = await getAccessToken()
+    const refreshToken = await getRefreshToken()
+
+    if (!accessToken || !refreshToken) {
+      setUser(null)
+      return
+    }
+
+    try {
+      // First try to validate the current access token
+      const userData = await validateToken(accessToken)
+      if (userData) {
+        setUser(userData)
+        return
       }
+
+      // If access token is invalid, try to refresh it
+      console.log("Refreshing access token")
+      const response = await backend.post('/login/refresh-token', { refreshToken })
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: refreshedUser } = response.data
+
+      if (newAccessToken && newRefreshToken && refreshedUser) {
+        // Store the new tokens
+        await storeTokens(newAccessToken, newRefreshToken)
+        setUser(refreshedUser)
+      } else {
+        throw new Error('Invalid response from refresh token endpoint')
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error)
+      // Only delete tokens if we get an unauthorized error or if the refresh token is invalid
+      const axiosError = error as AxiosError
+      if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
+        await deleteTokens()
+      }
+      setUser(null)
     }
   }
 
@@ -48,13 +72,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshUser()
   }, [])
 
-  const login = async (userData: AuthUser, token: string) => {
-    await storeToken(token)
+  const login = async (userData: AuthUser, accessToken: string, refreshToken: string) => {
+    await storeTokens(accessToken, refreshToken)
     setUser(userData)
   }
 
   const logout = async () => {
-    await deleteToken()
+    const refreshToken = await getRefreshToken()
+    if (refreshToken) {
+      try {
+        await backend.post('/login/logout', { refreshToken })
+      } catch (error) {
+        console.error('Error during logout:', error)
+      }
+    }
+    await deleteTokens()
     setUser(null)
   }
 

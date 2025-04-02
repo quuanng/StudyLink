@@ -18,7 +18,10 @@ const ChatListEntry: React.FC<ChatListEntryProps> = ({ id, title, lastMessage, l
 
   return (
     <Pressable 
-      style={styles.container} 
+      style={({ pressed }) => [
+        styles.container,
+        pressed && styles.pressedContainer
+      ]} 
       onPress={() => navigation.navigate('SingleChatScreen', { chatId: id })}
     >
       <View style={styles.sub_container}>
@@ -27,11 +30,11 @@ const ChatListEntry: React.FC<ChatListEntryProps> = ({ id, title, lastMessage, l
         </View>
         <View style={styles.text_parent_container}>
           <View style={styles.text_headline_container}>
-            <Text style={styles.text_headline_group_name}>{title}</Text>
+            <Text style={styles.text_headline_group_name} numberOfLines={1}>{title}</Text>
             <Text style={styles.text_headline_last_date}>{formattedDate}</Text>
           </View>
           <View style={styles.text_body_container}>
-            <Text style={styles.body_label}>{lastMessage || "No messages yet"}</Text>
+            <Text style={styles.body_label} numberOfLines={1}>{lastMessage || "No messages yet"}</Text>
           </View>
         </View>
       </View>
@@ -41,54 +44,70 @@ const ChatListEntry: React.FC<ChatListEntryProps> = ({ id, title, lastMessage, l
 
 const styles = StyleSheet.create({
   container: {
-    aspectRatio: 400/80,
     backgroundColor: '#ffffff',
-    borderRadius: 5,
-    width:'100%',
+    borderRadius: 12,
+    width: '100%',
+    marginVertical: 6,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  pressedContainer: {
+    backgroundColor: '#f8f8f8',
+    transform: [{ scale: 0.98 }],
   },
   sub_container: {
-    flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   icon_container: {
-    flex: 68/400,
-    alignContent: 'center',
-    justifyContent: 'center',
+    width: 48,
+    height: 48,
+    marginRight: 16,
   },
   placeholder_icon: {
-    flex: 5/10,
-    aspectRatio: 1,
-    margin: 'auto',
-    borderRadius: 100,
-    backgroundColor: '#D9D9D9'
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#E8E8E8',
   },
   text_parent_container: {
-    flex: 1-68/400,
-    flexDirection: 'column',
+    flex: 1,
+    width: '100%',
   },
   text_headline_container: {
-    paddingTop: 8,
-    flex: 0.3,
-    fontSize: 16,
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    width: '100%',
   },
   text_headline_group_name: {
-    flex: 0.7,
-    textAlign: 'left',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    flex: 1,
+    marginRight: 8,
   },
   text_headline_last_date: {
-    flex: 0.3,
-    textAlign: 'right',
-    paddingRight: 10,
-    color: '#696969'
+    fontSize: 14,
+    color: '#666666',
   },
   text_body_container: {
-    flex: 0.7,
-    fontSize: 14,
-    paddingRight: 10,
+    marginTop: 2,
+    width: '100%',
   },
   body_label: {
-    color: '#696969'
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
   },
 })
 

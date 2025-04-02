@@ -11,10 +11,22 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ Message }) => {
   const [isSelf, setIsSelf] = useState(false)
+  const [avatarColor, setAvatarColor] = useState('#000000')
 
   useEffect(() => {
     // TODO: setting isSelf to always be false to make all messages left-aligned
     // setIsSelf(Message.senderId == dummyLocalUserId)
+    
+    // Generate a consistent color based on the sender's ID
+    const hash = Message.senderId.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
+    
+    // Generate a pastel color using the hash
+    const hue = Math.abs(hash % 360)
+    const saturation = 70
+    const lightness = 80
+    setAvatarColor(`hsl(${hue}, ${saturation}%, ${lightness}%)`)
   }, [Message])
 
   const formatTimestamp = (timestamp?: string): string => {
@@ -37,46 +49,44 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ Message }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.sub_container}>
-        {isSelf || (
-          <View style={styles.icon_container}>
-            <View style={styles.placeholder_icon}></View>
+      <View style={[styles.messageWrapper, isSelf ? styles.selfWrapper : styles.otherWrapper]}>
+        {!isSelf && (
+          <View style={styles.avatarContainer}>
+            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+              <Text style={styles.avatarText}>
+                {Message.senderName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
           </View>
         )}
-        <View style={styles.text_parent_container}>
-          {!isSelf ? (
-            <View style={styles.other_text_headline_container}>
-              <Text style={styles.other_message_sender}>{Message.senderName}</Text>
-              <Text style={styles.other_message_date}>
-                {formatTimestamp(Message.timestamps[0])}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.self_text_headline_container}>
-              <Text style={styles.self_message_sender}>{Message.senderName}</Text>
-              <Text style={styles.self_message_date}>
-                {formatTimestamp(Message.timestamps[0])}
-              </Text>
+        <View style={styles.contentContainer}>
+          {!isSelf && (
+            <View style={styles.nameContainer}>
+              <Text style={styles.senderName}>{Message.senderName}</Text>
+              <Text style={styles.timestamp}>{formatTimestamp(Message.timestamps[0])}</Text>
             </View>
           )}
-          {!isSelf ? (
-            <View style={styles.other_text_body_container}>
-              {Message.messages.map((content, index) => (
-                <Text key={index} style={styles.other_body_label}>
+          {Message.messages.map((content, index) => (
+            <View key={index} style={styles.messageGroup}>
+              <View style={[
+                styles.messageBubble, 
+                isSelf ? styles.selfBubble : styles.otherBubble,
+                index === 0 ? (isSelf ? styles.firstSelfBubble : styles.firstOtherBubble) : styles.sequentialBubble
+              ]}>
+                <Text style={[styles.messageText, isSelf ? styles.selfText : styles.otherText]}>
                   {content}
                 </Text>
-              ))}
+              </View>
             </View>
-          ) : (
-            <View style={styles.self_text_body_container}>
-              {Message.messages.map((content, index) => (
-                <Text key={index} style={styles.self_body_label}>
-                  {content}
-                </Text>
-              ))}
-            </View>
-          )}
+          ))}
         </View>
+        {isSelf && (
+          <View style={styles.avatarContainer}>
+            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+              <Text style={styles.avatarText}>M</Text>
+            </View>
+          </View>
+        )}
       </View>
     </View>
   )
@@ -84,72 +94,100 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ Message }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
-    minHeight: 60,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    alignSelf: 'stretch',
-    backgroundColor: 'transparent',
+    width: '100%',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
-  sub_container: {
+  messageWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    maxWidth: '85%',
     width: '100%',
   },
-  icon_container: {
-    width: 50,
-    marginRight: 10,
+  selfWrapper: {
+    alignSelf: 'flex-end',
+  },
+  otherWrapper: {
+    alignSelf: 'flex-start',
+  },
+  avatarContainer: {
+    width: 36,
+    height: 36,
+    marginHorizontal: 6,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  placeholder_icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#D9D9D9'
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
   },
-  text_parent_container: {
+  contentContainer: {
     flex: 1,
-    flexDirection: 'column',
-    width: '100%',
   },
-  other_text_headline_container: {
+  nameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  self_text_headline_container: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
+  senderName: {
+    fontSize: 13,
+    color: '#666666',
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  messageGroup: {
     marginBottom: 4,
   },
-  other_message_sender: {
-    fontWeight: 'bold',
+  messageBubble: {
+    padding: 12,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  other_message_date: {
-    marginLeft: 5,
-    color: '#696969',
+  selfBubble: {
+    alignSelf: 'flex-end',
   },
-  self_message_sender: {
-    fontWeight: 'bold',
-    width: '100%',
+  otherBubble: {
+    alignSelf: 'flex-start',
   },
-  self_message_date: {
-    marginRight: 5,
-    color: '#696969',
+  firstSelfBubble: {
+    borderTopRightRadius: 4,
   },
-  other_text_body_container: {},
-  self_text_body_container: {
-    alignItems: 'flex-end',
+  firstOtherBubble: {
+    borderTopLeftRadius: 4,
   },
-  other_body_label: {
+  sequentialBubble: {
+    borderRadius: 20,
+  },
+  messageText: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  selfText: {
     color: '#000000',
-    textAlign: 'left',
-    lineHeight: 18,
-    marginBottom: 5,
   },
-  self_body_label: {
+  otherText: {
     color: '#000000',
-    textAlign: 'right',
+  },
+  timestamp: {
+    fontSize: 11,
+    color: '#999999',
   },
 })
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useContext } from 'react'
-import { View, Text, StyleSheet, FlatList, Button, SafeAreaView, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState, useContext, useRef } from 'react'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native'
 import ChatMessage from '../components/ChatMessage'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
@@ -8,6 +8,7 @@ import ChatSendBox from '../components/ChatSendBox'
 import { useChat } from '../context/ChatContext'
 import backend from '../backend'
 import { AuthContext } from '../context/AuthContext'
+import Icon from 'react-native-vector-icons/Ionicons'
 
 export interface MergedChatMessageData {
   _ids: string[]
@@ -71,6 +72,7 @@ export default function SingleChatScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
   const route = useRoute()
   const { chatId } = route.params as { chatId: string }
+  const flatListRef = useRef<FlatList>(null)
 
   // Use AuthContext to get logged-in user info
   const { user } = useContext(AuthContext)
@@ -116,6 +118,14 @@ export default function SingleChatScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId])
 
+  // Add effect to scroll to bottom when messages change
+  useEffect(() => {
+    if (flatListRef.current && mergedChatMessages.length > 0) {
+      // For inverted list, scrollToOffset with 0 brings us to the latest messages
+      flatListRef.current.scrollToOffset({ offset: 0, animated: true })
+    }
+  }, [mergedChatMessages])
+
   // Handler to send a message via the socket
   const handleSendMessage = (content: string) => {
     // Use the logged in user's info if available
@@ -128,31 +138,53 @@ export default function SingleChatScreen() {
   }
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      </SafeAreaView>
+    )
   }
 
   if (error) {
-    return <Text style={styles.errorText}>{error}</Text>
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <View style={styles.container}>
-          <View style={styles.head_container}>
-            <Button title="Back" onPress={() => navigation.goBack()} />
-            <View style={styles.title_container}>
-              <Text style={styles.chat_title}>Chat Room</Text>
-            </View>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="chevron-back" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.chatTitle}>Chat Room</Text>
+            <Text style={styles.participantCount}>2 participants</Text>
           </View>
-          <FlatList 
-            contentContainerStyle={styles.list} 
-            data={mergedChatMessages}
-            renderItem={({ item }) => <ChatMessage Message={item} />}
-            keyExtractor={(item, idx) => idx.toString()}
-          />
-          <ChatSendBox sendMessage={handleSendMessage} />
         </View>
+        
+        <FlatList 
+          ref={flatListRef}
+          contentContainerStyle={[styles.messageList, { justifyContent: 'flex-end' }]} 
+          data={[...mergedChatMessages].reverse()}
+          renderItem={({ item }) => <ChatMessage Message={item} />}
+          keyExtractor={(item, idx) => idx.toString()}
+          showsVerticalScrollIndicator={false}
+          inverted={true}
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        />
+        
+        <ChatSendBox sendMessage={handleSendMessage} />
       </View>
     </SafeAreaView>
   )
@@ -163,47 +195,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  background: {
-    backgroundColor:'#ffffff',
-    width:'100%',
-    height:'100%',
-  },
   container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor:'#f2f2f2',
-  },
-  head_container: {
-    height: 50,
     backgroundColor: '#ffffff',
-    width: "100%",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
-  title_container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+  backButton: {
+    padding: 8,
+    marginRight: 8,
   },
-  chat_title: {
-    fontSize: 18,
-  },
-  list: {
+  headerContent: {
     flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 2,
-    gap: 2,
-    flexDirection: 'column',
-    alignItems: 'center',
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  participantCount: {
+    fontSize: 14,
+    color: '#666666',
+    marginTop: 2,
+  },
+  messageList: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   errorText: {
-    color: 'red',
+    color: '#FF3B30',
     fontSize: 16,
     textAlign: 'center',
-    marginTop: 20,
   },
 })

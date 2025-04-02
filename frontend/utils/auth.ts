@@ -2,56 +2,91 @@ import EncryptedStorage from 'react-native-encrypted-storage'
 import backend from '../backend.ts'
 
 /**
- * Stores the JWT token securely.
- * @param token - The token to store.
+ * Stores the access and refresh tokens securely.
+ * @param accessToken - The access token to store.
+ * @param refreshToken - The refresh token to store.
  */
-export const storeToken = async (token: string): Promise<void> => {
+export const storeTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
   try {
-    await EncryptedStorage.setItem('userToken', token)
+    await EncryptedStorage.setItem('userAccessToken', accessToken)
+    await EncryptedStorage.setItem('userRefreshToken', refreshToken)
   } catch (error) {
-    console.error('Error storing token:', error)
-    throw new Error('Failed to store token.')
+    console.error('Error storing tokens:', error)
+    throw new Error('Failed to store tokens.')
   }
 }
 
 /**
- * Retrieves the stored JWT token.
- * @returns The token, or null if it doesn't exist.
+ * Retrieves the stored access token.
+ * @returns The access token, or null if it doesn't exist.
  */
-export const getToken = async (): Promise<string | null> => {
+export const getAccessToken = async (): Promise<string | null> => {
   try {
-    return await EncryptedStorage.getItem('userToken')
+    return await EncryptedStorage.getItem('userAccessToken')
   } catch (error) {
-    console.error('Error retrieving token:', error)
+    console.error('Error retrieving access token:', error)
     return null
   }
 }
 
 /**
- * Deletes the stored JWT token.
+ * Retrieves the stored refresh token.
+ * @returns The refresh token, or null if it doesn't exist.
  */
-export const deleteToken = async (): Promise<void> => {
+export const getRefreshToken = async (): Promise<string | null> => {
   try {
-    const token = await EncryptedStorage.getItem('userToken')
-    if (token) {
-      await EncryptedStorage.removeItem('userToken')
-    }
+    return await EncryptedStorage.getItem('userRefreshToken')
   } catch (error) {
-    console.error('Error deleting token:', error)
+    console.error('Error retrieving refresh token:', error)
+    return null
   }
 }
 
+/**
+ * Deletes the stored tokens.
+ */
+export const deleteTokens = async (): Promise<void> => {
+  try {
+    await EncryptedStorage.removeItem('userAccessToken')
+    await EncryptedStorage.removeItem('userRefreshToken')
+  } catch (error) {
+    console.error('Error deleting tokens:', error)
+  }
+}
 
 /**
- * Validates the token with the backend.
- * @param token - The token to validate.
+ * Refreshes the access token using the refresh token.
+ * @returns The new access token if successful, null otherwise.
+ */
+export const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = await getRefreshToken()
+    if (!refreshToken) return null
+
+    const response = await backend.post('/login/refresh-token', { refreshToken })
+    const { accessToken, refreshToken: newRefreshToken } = response.data
+    
+    // Store both the new access token and refresh token
+    await EncryptedStorage.setItem('userAccessToken', accessToken)
+    await EncryptedStorage.setItem('userRefreshToken', newRefreshToken)
+    
+    return accessToken
+  } catch (error) {
+    console.error('Error refreshing token:', error)
+    return null
+  }
+}
+
+/**
+ * Validates the access token with the backend.
+ * @param accessToken - The access token to validate.
  * @returns The user data if the token is valid.
  */
-export const validateToken = async (token: string): Promise<any> => {
+export const validateToken = async (accessToken: string): Promise<any> => {
   try {
     const response = await backend.get('/login/me', {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
     })

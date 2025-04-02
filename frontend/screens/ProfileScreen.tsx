@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { View, Text, Alert, Button, StyleSheet } from 'react-native'
 import LoginForm from '../components/LoginForm'
-import { storeToken, getToken, deleteToken, validateToken } from '../utils/auth'
+import { storeTokens, getAccessToken, getRefreshToken, deleteTokens, validateToken } from '../utils/auth'
 import RegisterForm from '../components/RegisterForm'
 import { AxiosError } from 'axios'
 import backend from '../backend'
-import { AuthContext } from '../context/AuthContext'  // Import AuthContext
+import { AuthContext } from '../context/AuthContext'
 
 interface ErrorResponse {
   error: string
 }
 
 const ProfileScreen: React.FC = () => {
-  // Remove local user state and use AuthContext instead
   const { user, login, logout } = useContext(AuthContext)
   const [loading, setLoading] = useState(false)
   const [activeForm, setActiveForm] = useState<"login" | "register">("login")
@@ -21,14 +20,19 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const token = await getToken()
-        if (token) {
-          const userData = await validateToken(token)
+        const accessToken = await getAccessToken()
+        if (accessToken) {
+          const userData = await validateToken(accessToken)
           if (userData) {
-            // Instead of setting local state, update the AuthContext
-            login(userData, token)
+            // Get refresh token and update AuthContext with both tokens
+            const refreshToken = await getRefreshToken()
+            if (refreshToken) {
+              login(userData, accessToken, refreshToken)
+            } else {
+              await deleteTokens()
+            }
           } else {
-            await deleteToken()
+            await deleteTokens()
           }
         }
       } catch (error) {
@@ -44,10 +48,10 @@ const ProfileScreen: React.FC = () => {
     setLoading(true)
     try {
       const response = await backend.post(`/login/login`, { email, password })
-      const { token, user } = response.data
-      await storeToken(token)
-      // Update AuthContext with the logged in user
-      login(user, token)
+      const { accessToken, refreshToken, user } = response.data
+      await storeTokens(accessToken, refreshToken)
+      // Update AuthContext with the logged in user and both tokens
+      login(user, accessToken, refreshToken)
       Alert.alert('Success', `Welcome, ${user.name}!`)
     } catch (error: unknown) {
       const axiosError = error as AxiosError<ErrorResponse>
@@ -81,8 +85,11 @@ const ProfileScreen: React.FC = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await deleteToken()
-      logout()  // Update AuthContext to clear the user
+      const refreshToken = await getRefreshToken()
+      if (refreshToken) {
+        await backend.post('/login/logout', { refreshToken })
+      }
+      logout()
       Alert.alert('Logged out', 'You have been logged out successfully.')
     } catch (error) {
       console.error('Logout error:', error)
