@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios'
 
 // Create an Axios instance with proper types
 const backend: AxiosInstance = axios.create({
-    baseURL: "http://localhost:8240/api",
+    baseURL: "https://studylink-3cg5.onrender.com/api",
     timeout: 5000,  
     withCredentials: true,  
     headers: {
