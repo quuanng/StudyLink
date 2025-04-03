@@ -6,6 +6,7 @@ import { RootStackParamList } from '../navigation/MainNavigator';
 import { useNavigation } from '@react-navigation/native';
 
 interface ClassProps {
+    classId: string;
     className: string;
     members: number;
     icon: string;
@@ -13,14 +14,14 @@ interface ClassProps {
     screen: "home" | "classes";
 }
 
-const ClassEntry: React.FC<ClassProps> = ({ className, members, icon, joined, screen }) => {
+const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, joined, screen }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
 
     return (
         <TouchableOpacity
             style={[styles.container, joined && styles.joinedContainer]}
             onPress={() => {
-                if (joined) { navigation.navigate('ClassViewScreen', { className: className, members: members, instructor: "Unknown Instructor" }) }
+                if (joined) { navigation.navigate('ClassViewScreen', { classId: classId, className: className, members: members, instructor: "Unknown Instructor" }) }
             }}
             disabled={!joined}
         >
@@ -36,7 +37,7 @@ const ClassEntry: React.FC<ClassProps> = ({ className, members, icon, joined, sc
                     </View>
                 </View>
             </View>
-            
+
             <View style={styles.rightContent}>
                 {joined ? (
                     <View style={[styles.statusBadge, screen === "classes" && styles.joinedBadge]}>

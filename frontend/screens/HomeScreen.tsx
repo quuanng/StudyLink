@@ -14,7 +14,7 @@ export default function HomeScreen() {
   ];
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
-    <ClassEntry className={item.className} members={item.members} icon={item.icon} joined={true} screen='home' />
+    <ClassEntry classId={item.id} className={item.className} members={item.members} icon={item.icon} joined={true} screen='home' />
   );
 
   return (

@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Button, SafeAreaView, FlatList, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 const ClassViewScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const { className, members, instructor } = route.params as { className: string; members: number; instructor: string; };
+  const { classId, className, members, instructor } = route.params as { classId: string, className: string; members: number; instructor: string; };
 
   const dummyStudyGroups: ClassGroupEntryProps[] = [
     {
@@ -62,6 +63,15 @@ const ClassViewScreen = () => {
               <Text style={styles.emptyText}>No study groups available</Text>
             }
           />
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => { navigation.navigate('GroupCreationForm', { classId: classId, className: className }) }}
+            >
+              <Text style={styles.addButtonText}>Add a Group</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -71,7 +81,7 @@ const ClassViewScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff',
   },
   container: {
     flex: 1,
@@ -99,6 +109,8 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    outlineWidth: 1,
+    outlineColor: '#d1d1d1'
   },
   welcomeText: {
     fontSize: 16,
@@ -116,6 +128,23 @@ const styles = StyleSheet.create({
     marginTop: 32,
     fontSize: 16,
   },
+  buttonContainer: {
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  }
 });
 
 export default ClassViewScreen;

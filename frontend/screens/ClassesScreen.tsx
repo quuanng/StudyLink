@@ -101,6 +101,7 @@ export default function ClassesScreen() {
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
     <ClassEntry
+      classId={item.id}
       className={item.className}
       members={item.members}
       icon={item.icon}
