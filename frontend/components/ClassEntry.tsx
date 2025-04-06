@@ -1,9 +1,9 @@
-import { StackNavigationProp } from '@react-navigation/stack';
+import { StackNavigationProp } from '@react-navigation/stack'
 import React, { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
-import { RootStackParamList } from '../navigation/MainNavigator';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
+import Icon from 'react-native-vector-icons/AntDesign'
+import { RootStackParamList } from '../navigation/MainNavigator'
+import { useNavigation } from '@react-navigation/native'
 
 interface ClassProps {
     classId: string;
@@ -57,8 +57,8 @@ const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, j
                 )}
             </View>
         </TouchableOpacity>
-    );
-};
+    )
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -142,6 +142,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontWeight: '600',
     },
-});
+})
 
 export default ClassEntry

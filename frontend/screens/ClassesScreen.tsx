@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useContext } from 'react'
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
 import ClassEntry from '../components/ClassEntry'
 import ClassSearch from '../components/ClassSearch'
 import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 export interface ClassEntryItem {
   id: string;
@@ -13,8 +14,10 @@ export interface ClassEntryItem {
 }
 
 export default function ClassesScreen() {
+  const { user } = useContext(AuthContext)
   const [classes, setClasses] = useState<ClassEntryItem[]>([])
   const [filteredData, setFilteredData] = useState<ClassEntryItem[]>([])
+  const [savedClassIds, setSavedClassIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,18 +25,34 @@ export default function ClassesScreen() {
 
   useEffect(() => {
     const fetchClasses = async () => {
+      if (!user?.id) {
+        setError("User not logged in.")
+        setLoading(false)
+        return
+      }
+
       try {
-        const response = await backend.get(`/class/courses`)
-        const formattedClasses = response.data.map((course: any) => ({
+        const [allClassesResponse, savedClassesResponse] = await Promise.all([
+          backend.get(`/class/courses`),
+          backend.get(`/user/${user.id}/saved-courses`),
+        ])
+
+        const savedIds = new Set<string>(
+          savedClassesResponse.data.savedCourses.map((course: any) => String(course._id))
+        )        
+        setSavedClassIds(savedIds)
+
+        const formattedClasses: ClassEntryItem[] = allClassesResponse.data.map((course: any) => ({
           id: course._id,
           className: course.full_name,
           members: course.count,
           icon: '',
-          joined: false,
+          joined: savedIds.has(course._id),
         }))
 
         setClasses(formattedClasses)
         setFilteredData(formattedClasses)
+        setError(null)
       } catch (err) {
         console.error('Error fetching classes:', err)
         setError('Failed to load classes')
@@ -43,21 +62,21 @@ export default function ClassesScreen() {
     }
 
     fetchClasses()
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (isFirstRender.current) {
-      isFirstRender.current = false // Mark first render as done
+      isFirstRender.current = false
       return
     }
 
     const delaySearch = setTimeout(() => {
       if (searchQuery.trim() === '') {
-        setFilteredData(classes) // Reset to original fetched data
+        setFilteredData(classes)
       } else {
         fetchSearchedClasses(searchQuery)
       }
-    }, 500) // Delay api call half second
+    }, 500)
 
     return () => clearTimeout(delaySearch)
   }, [searchQuery])
@@ -65,12 +84,13 @@ export default function ClassesScreen() {
   const fetchSearchedClasses = async (query: string) => {
     try {
       const response = await backend.get(`/class/courses?search=${query}`)
+
       const searchedClasses = response.data.map((course: any) => ({
         id: course._id,
         className: course.full_name,
         members: course.count,
         icon: '',
-        joined: false,
+        joined: savedClassIds.has(course._id), // ✅ Use global Set
       }))
 
       setFilteredData(searchedClasses)
@@ -80,7 +100,7 @@ export default function ClassesScreen() {
   }
 
   const handleSearch = (text: string) => {
-    setSearchQuery(text) // Update searchQuery state (debounced effect will trigger API call)
+    setSearchQuery(text)
   }
 
   if (loading) {
