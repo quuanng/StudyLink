@@ -1,73 +1,96 @@
-import React from 'react';
-import { View, Text, StyleSheet, Button, SafeAreaView, FlatList, TouchableOpacity, Pressable, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry';
-import Icon from 'react-native-vector-icons/AntDesign';
+import backend from '../backend';
 
 const ClassViewScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const { classId, className, members, instructor } = route.params as { classId: string, className: string; members: number; instructor: string; };
+  const { classId, className, members, instructor } = route.params as {
+    classId: string,
+    className: string,
+    members: number,
+    instructor: string
+  };
 
-  const dummyStudyGroups: ClassGroupEntryProps[] = [
-    {
-      title: "Homework 1 Meetup",
-      timestamp: "2024-03-25T12:34:56.789Z",
-      location: "HSEC Floor 3 Commons",
-      maxStudents: 8,
-      isPrivate: false,
-      memberCount: 5
-    },
-    {
-      title: "Final Exam Study Session",
-      timestamp: "2024-04-15T14:00:00.000Z",
-      location: "Library Study Room 204",
-      maxStudents: 6,
-      isPrivate: true,
-      memberCount: 3
-    },
-    {
-      title: "Project Group Discussion",
-      timestamp: "2024-03-28T16:30:00.000Z",
-      location: "Engineering Building Room 302",
-      maxStudents: 5,
-      isPrivate: false,
-      memberCount: 4
-    }
-  ];
+  const [studyGroups, setStudyGroups] = useState<ClassGroupEntryProps[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStudyGroups = async () => {
+      try {
+        const response = await backend.get(`study-group/class/${classId}`);
+        const groups = response.data;
+
+        const formattedGroups: ClassGroupEntryProps[] = groups.map((group: any) => ({
+          title: group.title,
+          timestamp: group.time,
+          location: group.location,
+          maxStudents: group.maxStudents,
+          isPrivate: group.priv,
+          memberCount: group.members.length,
+        }));
+
+        setStudyGroups(formattedGroups);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load study groups.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudyGroups();
+  }, [classId]);
+
+  const renderItem = ({ item }: { item: ClassGroupEntryProps }) => (
+    <ClassGroupEntry {...item} />
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
-          <Button title="Back" onPress={() => navigation.goBack()} />
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={{ color: '#007AFF' }}>Back</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>{className}</Text>
           <Text style={styles.memberCount}>{members} Members</Text>
         </View>
 
         <View style={styles.contentContainer}>
-
           <Text style={styles.welcomeText}>Browse Available Study Groups</Text>
 
-          <FlatList
-            data={dummyStudyGroups}
-            renderItem={({ item }) => (
-              <ClassGroupEntry {...item} />
-            )}
-            keyExtractor={(item) => item.timestamp}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No study groups available</Text>
-            }
-          />
+          {loading ? (
+            <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+          ) : error ? (
+            <Text style={styles.emptyText}>{error}</Text>
+          ) : (
+            <FlatList
+              data={studyGroups}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.timestamp}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No study groups available</Text>
+              }
+            />
+          )}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => { navigation.navigate('GroupCreationForm', { classId: classId, className: className }) }}
+              onPress={() =>
+                navigation.navigate('GroupCreationForm', {
+                  classId,
+                  className,
+                })
+              }
             >
               <Text style={styles.addButtonText}>Add a Group</Text>
             </TouchableOpacity>
@@ -76,7 +99,7 @@ const ClassViewScreen = () => {
       </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -94,13 +117,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    flex: 1,
     textAlign: 'center',
-    marginLeft: -40, // Offset for the back button to center the title
+    flex: 1,
   },
   memberCount: {
     fontSize: 14,
@@ -109,8 +132,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    outlineWidth: 1,
-    outlineColor: '#d1d1d1'
   },
   welcomeText: {
     fontSize: 16,
@@ -144,7 +165,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  }
+  },
 });
 
 export default ClassViewScreen;
