@@ -1,30 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/MainNavigator';
-import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry';
-import backend from '../backend';
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native'
+import { StackNavigationProp } from '@react-navigation/stack'
+import { RootStackParamList } from '../navigation/MainNavigator'
+import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry'
+import backend from '../backend'
 
 const ClassViewScreen = () => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const route = useRoute();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
+  const route = useRoute()
   const { classId, className, members, instructor } = route.params as {
     classId: string,
     className: string,
     members: number,
     instructor: string
-  };
+  }
 
-  const [studyGroups, setStudyGroups] = useState<ClassGroupEntryProps[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [studyGroups, setStudyGroups] = useState<ClassGroupEntryProps[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const isFocused = useIsFocused()
 
   useEffect(() => {
+    if (!isFocused) return
+
     const fetchStudyGroups = async () => {
       try {
-        const response = await backend.get(`study-group/class/${classId}`);
-        const groups = response.data;
+        const response = await backend.get(`study-group/class/${classId}`)
+        const groups = response.data
 
         const formattedGroups: ClassGroupEntryProps[] = groups.map((group: any) => ({
           title: group.title,
@@ -33,23 +37,23 @@ const ClassViewScreen = () => {
           maxStudents: group.maxStudents,
           isPrivate: group.priv,
           memberCount: group.members.length,
-        }));
+        }))
 
-        setStudyGroups(formattedGroups);
+        setStudyGroups(formattedGroups)
       } catch (err) {
-        console.error(err);
-        setError('Failed to load study groups.');
+        console.error(err)
+        setError('Failed to load study groups.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchStudyGroups();
-  }, [classId]);
+    fetchStudyGroups()
+  }, [classId, isFocused])
 
   const renderItem = ({ item }: { item: ClassGroupEntryProps }) => (
     <ClassGroupEntry {...item} />
-  );
+  )
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -98,8 +102,8 @@ const ClassViewScreen = () => {
         </View>
       </View>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -166,6 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-});
+})
 
-export default ClassViewScreen;
+export default ClassViewScreen

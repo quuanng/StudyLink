@@ -18,6 +18,8 @@ import { AuthContext } from '../context/AuthContext'
 import Icon from 'react-native-vector-icons/Ionicons'
 import DatePicker from 'react-native-date-picker'
 import { useContext, useState } from 'react'
+import backend from '../backend'
+import { getAccessToken, refreshAccessToken } from '../utils/auth'
 
 export default function GroupCreationForm() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
@@ -62,15 +64,68 @@ export default function GroupCreationForm() {
     return valid
   }
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-
-      Alert.alert("TODO: call route")
-      // TODO: call route
-
+  const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert("Log in to create a study group")
+      return
+    }
+  
+    if (!validateForm()) return
+  
+    const payload = {
+      classId,
+      creatorId: user.id,
+      title,
+      time: date.toISOString(),
+      location,
+      maxStudents: parseInt(maxStudents),
+      priv: isPrivate,
+    }
+  
+    try {
+      let accessToken = await getAccessToken()
+  
+      if (!accessToken) {
+        throw new Error("No access token available")
+      }
+  
+      const config = {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+  
+      let response
+  
+      try {
+        response = await backend.post('/study-group/add', payload, config)
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          // Try refreshing the token
+          accessToken = await refreshAccessToken()
+          if (accessToken) {
+            const retryConfig = {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+            response = await backend.post('/study-group/add', payload, retryConfig)
+          } else {
+            throw new Error("Unable to refresh token")
+          }
+        } else {
+          throw err
+        }
+      }
+  
+      Alert.alert("Success", "Study group created!")
       navigation.goBack()
+    } catch (err) {
+      console.error(err)
+      Alert.alert("Error", "Failed to create study group. Please try again.")
     }
   }
+  
 
   return (
     <SafeAreaView style={styles.safeArea}>

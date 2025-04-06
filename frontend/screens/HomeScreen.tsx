@@ -1,24 +1,24 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
-import ClassEntry from '../components/ClassEntry';
-import { ClassEntryItem } from './ClassesScreen';
-import backend from '../backend';
-import { AuthContext } from '../context/AuthContext';
+import React, { useEffect, useState, useContext } from 'react'
+import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native'
+import ClassEntry from '../components/ClassEntry'
+import { ClassEntryItem } from './ClassesScreen'
+import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 export default function HomeScreen() {
-  const { user } = useContext(AuthContext);
-  const [joinedClasses, setJoinedClasses] = useState<ClassEntryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useContext(AuthContext)
+  const [joinedClasses, setJoinedClasses] = useState<ClassEntryItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Don't run the fetch until user is loaded
-    if (!user) return;
+    if (!user) return
 
     const fetchJoinedClasses = async () => {
       try {
-        const response = await backend.get(`/user/${user.id}/saved-courses`);
-        const courses = response.data.savedCourses;
+        const response = await backend.get(`/user/${user.id}/saved-courses`)
+        const courses = response.data.savedCourses
 
         const formattedCourses: ClassEntryItem[] = courses.map((course: any) => ({
           id: course._id,
@@ -26,19 +26,19 @@ export default function HomeScreen() {
           members: course.count,
           icon: '',
           joined: true,
-        }));
+        }))
 
-        setJoinedClasses(formattedCourses);
+        setJoinedClasses(formattedCourses)
       } catch (err: any) {
-        console.error(err);
-        setError('Failed to load courses.');
+        console.error(err)
+        setError('Failed to load courses.')
       } finally {
-        setLoading(false); // Only stop loading after fetch is attempted
+        setLoading(false) // Only stop loading after fetch is attempted
       }
-    };
+    }
 
-    fetchJoinedClasses();
-  }, [user]);
+    fetchJoinedClasses()
+  }, [user])
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
     <ClassEntry
@@ -49,14 +49,14 @@ export default function HomeScreen() {
       joined={true}
       screen="home"
     />
-  );
+  )
 
   if (loading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
       </View>
-    );
+    )
   }
 
   if (error) {
@@ -64,7 +64,7 @@ export default function HomeScreen() {
       <View style={styles.centered}>
         <Text>{error}</Text>
       </View>
-    );
+    )
   }
 
   return (
@@ -77,7 +77,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.flatList}
       />
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -93,4 +93,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-});
+})

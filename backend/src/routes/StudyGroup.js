@@ -51,6 +51,7 @@ router.get("/user/:userId", async (req, res) => {
 // Add a new study group
 router.post("/add", authMiddleware, async (req, res) => {
   const { classId, title, time, location, maxStudents, priv, creatorId } = req.body
+  console.log(req.body)
 
   try {
     // Ensure the class exists
