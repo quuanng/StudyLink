@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react'
+import React, { useEffect, useState, useContext, useCallback } from 'react'
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native'
 import ClassEntry from '../components/ClassEntry'
 import { ClassEntryItem } from './ClassesScreen'
 import backend from '../backend'
 import { AuthContext } from '../context/AuthContext'
+import { useFocusEffect } from '@react-navigation/native'
 
 export default function HomeScreen() {
   const { user } = useContext(AuthContext)
@@ -11,7 +12,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     // Don't run the fetch until user is loaded
     if (!user) return
 
@@ -19,6 +20,8 @@ export default function HomeScreen() {
       try {
         const response = await backend.get(`/user/${user.id}/saved-courses`)
         const courses = response.data.savedCourses
+
+        console.log(response)
 
         const formattedCourses: ClassEntryItem[] = courses.map((course: any) => ({
           id: course._id,
@@ -38,7 +41,7 @@ export default function HomeScreen() {
     }
 
     fetchJoinedClasses()
-  }, [user])
+  }, [user]))
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
     <ClassEntry
@@ -48,6 +51,12 @@ export default function HomeScreen() {
       icon={item.icon}
       joined={true}
       screen="home"
+      updateJoined={(joined) =>
+        setJoinedClasses(prev =>
+          prev.map(cls =>
+            cls.id === item.id ? { ...item, joined: joined } : item
+          )
+        )}
     />
   )
 

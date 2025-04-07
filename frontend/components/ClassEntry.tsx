@@ -1,9 +1,11 @@
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import { useNavigation } from '@react-navigation/native';
+import backend from '../backend';
+import { AuthContext } from '../context/AuthContext';
 
 interface ClassProps {
     classId: string;
@@ -12,10 +14,23 @@ interface ClassProps {
     icon: string;
     joined: boolean;
     screen: "home" | "classes";
+    updateJoined: (joined: boolean) => void
 }
 
-const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, joined, screen }) => {
+const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, joined, screen, updateJoined }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
+    const { user } = useContext(AuthContext)
+
+    async function joinClass() {
+        try {
+            let response = backend.post("/user/toggle-class", { userId: user?.id, classId: classId })
+
+            updateJoined(!joined)
+        }
+        catch (error) {
+            console.error(error)
+        }
+    }
 
     return (
         <TouchableOpacity
@@ -39,20 +54,20 @@ const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, j
             </View>
 
             <View style={styles.rightContent}>
-                {joined ? (
-                    <View style={[styles.statusBadge, screen === "classes" && styles.joinedBadge]}>
+                {joined && screen === "home" ? (
+                    <View style={[styles.statusBadge, styles.joinedBadge]}>
                         <Text style={styles.statusText}>
-                            {screen === "classes" ? "Joined" : "View"}
+                            {"View"}
                         </Text>
                     </View>
                 ) : (
                     <TouchableOpacity
                         style={styles.joinButton}
                         onPress={() => {
-                            // Handle join action
+                            joinClass()
                         }}
                     >
-                        <Text style={styles.joinButtonText}>Join</Text>
+                        <Text style={styles.joinButtonText}>{joined ? "Remove" : "Join"}</Text>
                     </TouchableOpacity>
                 )}
             </View>
