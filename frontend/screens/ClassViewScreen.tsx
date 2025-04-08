@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RootStackParamList } from '../navigation/MainNavigator'
 import ClassGroupEntry, { ClassGroupEntryProps } from '../components/ClassGroupEntry'
 import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 const ClassViewScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
@@ -15,6 +16,8 @@ const ClassViewScreen = () => {
     members: number,
     instructor: string
   }
+
+  const { user } = useContext(AuthContext)
 
   const [studyGroups, setStudyGroups] = useState<ClassGroupEntryProps[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +40,7 @@ const ClassViewScreen = () => {
           maxStudents: group.maxStudents,
           isPrivate: group.priv,
           memberCount: group.members.length,
+          isOwnedByLocal: group.creatorId == user?.id
         }))
 
         setStudyGroups(formattedGroups)

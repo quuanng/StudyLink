@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RootStackParamList } from '../navigation/MainNavigator'
 import Icon from 'react-native-vector-icons/Octicons'
+import EditOutlined from 'react-native-vector-icons/AntDesign';
 
 export interface ClassGroupEntryProps {
     title: string
@@ -12,6 +13,7 @@ export interface ClassGroupEntryProps {
     maxStudents: number
     isPrivate: boolean
     memberCount: number
+    isOwnedByLocal: boolean
 }
 
 const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
@@ -20,7 +22,8 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
     location,
     memberCount,
     maxStudents,
-    isPrivate
+    isPrivate,
+    isOwnedByLocal
 }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
 
@@ -47,6 +50,12 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
         >
             <View style={styles.contentContainer}>
                 <View style={styles.headerContainer}>
+                    {isOwnedByLocal && <TouchableOpacity style={styles.editButtonContainer}
+                        onPress={() => navigation.navigate("GroupEditForm", { group: { title: title, timestamp: timestamp, location: location, memberCount: memberCount, maxStudents: maxStudents, isPrivate: isPrivate, isOwnedByLocal: isOwnedByLocal } })}>
+                        <View style={styles.editButtonView}>
+                            <EditOutlined name="edit" size={24} color="#007AFF" />
+                        </View>
+                    </TouchableOpacity>}
                     <Text style={styles.title} numberOfLines={1}>{title}</Text>
                     <View style={styles.memberCount}>
                         <Icon name="people" size={16} color="#666" />
@@ -212,6 +221,19 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
     },
+    editButtonContainer: {
+        backgroundColor: '#FFFFFF',
+        width: 35,
+        height: 35,
+        borderRadius: 8,
+    },
+    editButtonView: {
+        width: 'auto',
+        height: 'auto',
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 })
 
 export default ClassGroupEntry
