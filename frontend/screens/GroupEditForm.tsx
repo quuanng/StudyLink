@@ -66,7 +66,10 @@ export default function GroupEditForm() {
   }
 
   const handleSubmit = async () => {
-    // TODO
+    // TODO: do once edit route is in
+
+    group.refresh()
+    navigation.goBack()
   }
 
   useEffect(() => {

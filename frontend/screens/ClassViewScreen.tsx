@@ -25,6 +25,10 @@ const ClassViewScreen = () => {
 
   const isFocused = useIsFocused()
 
+  const refresh = () => {
+    // TODO: refresh func
+  }
+
   useEffect(() => {
     if (!isFocused) return
 
@@ -40,7 +44,9 @@ const ClassViewScreen = () => {
           maxStudents: group.maxStudents,
           isPrivate: group.priv,
           memberCount: group.members.length,
-          isOwnedByLocal: group.creatorId == user?.id
+          isOwnedByLocal: group.creatorId == user?.id,
+          localIsJoined: (group.members.some((u: any) => user?.id == u?.userId)),
+          refresh: refresh,
         }))
 
         setStudyGroups(formattedGroups)

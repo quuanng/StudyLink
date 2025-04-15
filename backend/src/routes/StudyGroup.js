@@ -14,7 +14,7 @@ router.get("/:groupId", async (req, res) => {
     res.json(group)
   } catch (error) {
     console.log(error)
-    res.status(500).json({ error: "Error getting study group."})
+    res.status(500).json({ error: "Error getting study group." })
   }
 })
 
@@ -179,7 +179,7 @@ router.delete("/:studyGroupId/member/:userId", async (req, res) => {
 router.get("/class/:classId", async (req, res) => {
   try {
     const { classId } = req.params
-    
+
     // Check if the class exists
     const classExists = await ClassModel.findById(classId)
     if (!classExists) {
@@ -187,7 +187,7 @@ router.get("/class/:classId", async (req, res) => {
     }
 
     // Get all study groups for this class
-    const studyGroups = await StudyGroupModel.find({classId})
+    const studyGroups = await StudyGroupModel.find({ classId })
       .sort({ time: 1 }) // Sort by time in ascending order
 
     res.status(200).json(studyGroups)

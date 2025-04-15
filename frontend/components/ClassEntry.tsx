@@ -67,7 +67,7 @@ const ClassEntry: React.FC<ClassProps> = ({ classId, className, members, icon, j
                             joinClass()
                         }}
                     >
-                        <Text style={styles.joinButtonText}>{joined ? "Remove" : "Join"}</Text>
+                        <Text style={styles.joinButtonText}>{joined ? "Leave" : "Join"}</Text>
                     </TouchableOpacity>
                 )}
             </View>
