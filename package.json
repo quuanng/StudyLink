@@ -5,6 +5,10 @@
     "ios-dev": "concurrently \"npm run ios\" \"npm run backend\""
   },
   "dependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "react-native-linear-gradient": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/react-native-linear-gradient": "^2.3.1"
   }
 }

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, Button, StyleSheet, Alert, Pressable } from 'react-native'
+import { View, Text, TextInput, StyleSheet, Alert, Pressable } from 'react-native'
 
 interface RegisterFormProps {
-    onSubmit: (name: string, email: string, password: string) => void // Callback to handle form submission
-    loading?: boolean // Optional: Show a loading state
+    onSubmit: (name: string, email: string, password: string) => void
+    loading?: boolean
     swapForm: () => void
 }
 
@@ -22,33 +22,36 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, loading, swapForm
 
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>Display Name</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Enter your display name"
+                placeholder="Display Name"
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="none"
             />
-            <Text style={styles.label}>Email</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder="Email"
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
-            <Text style={styles.label}>Password</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder="Password"
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <Button title={loading ? 'Signing up...' : 'Sign up'} onPress={handleSubmit} disabled={loading} />
-            <Button title="I already have an account" onPress={swapForm} />
+            <Pressable style={styles.loginButton} onPress={handleSubmit} disabled={loading}> 
+                <Text style={styles.loginButton}>
+                    {loading ? 'Signing up...' : 'Sign up'}
+                </Text>
+            </Pressable>
         </View>
     )
 }
@@ -57,24 +60,25 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
     },
-    label: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    pressableLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        color: 'blue',
-    },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        padding: 10,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: 20,
+        padding: 15,
         marginBottom: 15,
         fontSize: 16,
+        color: '#fff',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    loginButton: {
+        backgroundColor: '#007AFF',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 24,
+        color: '#FFFFFF',
+        fontSize: 16,
+        alignItems: "center",
+        fontWeight: '600',
     },
 })
 

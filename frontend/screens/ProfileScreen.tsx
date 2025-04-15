@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { View, Text, Alert, Button, StyleSheet } from 'react-native'
+import { View, Text, Alert, Button, StyleSheet, ImageBackground, Image, Pressable } from 'react-native'
 import LoginForm from '../components/LoginForm'
 import { storeTokens, getAccessToken, getRefreshToken, deleteTokens, validateToken } from '../utils/auth'
 import RegisterForm from '../components/RegisterForm'
@@ -97,40 +97,142 @@ const ProfileScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      {user ? (
-        <View>
-          <Text style={styles.text}>Welcome, {user.name}!</Text>
-          <Text style={styles.text}>Email: {user.email}</Text>
-          <Button title="Logout" onPress={handleLogout} />
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1557683304-673a23048d34' }}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Image 
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.content}>
+            {user ? (
+              <View style={styles.profileContainer}>
+                <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
+                <Button title="Logout" onPress={handleLogout} />
+              </View>
+            ) : (
+              <View style={styles.formContainer}>
+                {activeForm === "login" ? (
+                  <LoginForm
+                    onSubmit={handleLogin}
+                    loading={loading}
+                    swapForm={() => setActiveForm("register")}
+                  />
+                ) : (
+                  <RegisterForm
+                    onSubmit={handleRegister}
+                    loading={loading}
+                    swapForm={() => setActiveForm("login")}
+                  />
+                )}
+                <View style={styles.orContainer}>
+                  <View style={styles.line} />
+                  <Text style={styles.orText}>or</Text>
+                  <View style={styles.line} />
+                </View>
+              </View>
+            )}
+          </View>
+          {!user && (
+            <View style={styles.swapButtonContainer}>
+              {activeForm === "login" ? (
+                <Pressable onPress={() => setActiveForm("register")}>
+                  <Text style={styles.swapButtonText}>Create new account</Text>
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setActiveForm("login")}>
+                  <Text style={styles.swapButtonText}>I already have an account</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
-      ) : (
-        activeForm === "login" ? (
-          <View>
-            <Text style={styles.text}>Login to Your Profile</Text>
-            <LoginForm onSubmit={handleLogin} loading={loading} swapForm={() => setActiveForm("register")} />
-          </View>
-        ) : (
-          <View>
-            <Text style={styles.text}>Create an Account</Text>
-            <RegisterForm onSubmit={handleRegister} loading={loading} swapForm={() => setActiveForm("login")} />
-          </View>
-        )
-      )}
-    </View>
+      </View>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
     padding: 20,
   },
-  text: {
-    fontSize: 18,
-    marginBottom: 15,
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: -40,
+  },
+  logo: {
+    width: 350,
+    height: 350,
+    marginBottom: 0,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    paddingTop: 0,
+  },
+  formContainer: {
+    padding: 20,
+    borderRadius: 15,
+    marginTop: -60,
+  },
+  profileContainer: {
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 20,
+    marginBottom: 20,
+    color: '#fff',
+  },
+  swapButtonContainer: {
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  swapButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     textAlign: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    width: 250,
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+    marginTop: 40,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 10,
+  },
+  orText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginHorizontal: 10,
   },
 })
 
