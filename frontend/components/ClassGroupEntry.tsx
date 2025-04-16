@@ -1,9 +1,12 @@
-import React from 'react'
+import React, { useContext, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RootStackParamList } from '../navigation/MainNavigator'
 import Icon from 'react-native-vector-icons/Octicons'
+import EditOutlined from 'react-native-vector-icons/AntDesign';
+import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 export interface ClassGroupEntryProps {
     title: string
@@ -12,6 +15,10 @@ export interface ClassGroupEntryProps {
     maxStudents: number
     isPrivate: boolean
     memberCount: number
+    isOwnedByLocal: boolean
+    localIsJoined: boolean
+    studyGroupId: string
+    refresh: () => void
 }
 
 const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
@@ -20,9 +27,15 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
     location,
     memberCount,
     maxStudents,
-    isPrivate
+    isPrivate,
+    isOwnedByLocal,
+    localIsJoined,
+    studyGroupId,
+    refresh
 }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
+
+    const { user } = useContext(AuthContext)
 
     const calculateDaysUntilMeeting = (timestamp: string): string => {
         const meetingDate = new Date(timestamp)
@@ -38,6 +51,50 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
         return `Meeting in ${diffDays} days`
     }
 
+    async function handleJoin() {
+        try {
+            const req = await backend.post("/study-group/join", { studyGroupId: studyGroupId, userId: user?.id })
+
+            refresh()
+        }
+        catch (err) {
+            console.error("Error joining class group: ", err)
+        }
+    }
+
+    async function handleLeave() {
+        try {
+            const req = await backend.delete(studyGroupId.toString() + "/member/" + user?.id?.toString())
+
+            refresh()
+        }
+        catch (err) {
+            console.error("Error joining class group: ", err)
+        }
+    }
+
+    async function handleEdit() {
+        navigation.navigate("GroupEditForm", {
+            group:
+            {
+                title,
+                timestamp,
+                location,
+                memberCount,
+                maxStudents,
+                isPrivate,
+                isOwnedByLocal,
+                localIsJoined,
+                studyGroupId,
+                refresh
+            }
+        })
+    }
+
+    async function handleRequest() {
+        // TODO: request route needs doing
+    }
+
     const meetingText = calculateDaysUntilMeeting(timestamp)
 
     return (
@@ -47,6 +104,12 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
         >
             <View style={styles.contentContainer}>
                 <View style={styles.headerContainer}>
+                    {/* {isOwnedByLocal && <TouchableOpacity style={styles.editButtonContainer}
+                        onPress={() => navigation.navigate("GroupEditForm", { group: { title: title, timestamp: timestamp, location: location, memberCount: memberCount, maxStudents: maxStudents, isPrivate: isPrivate, isOwnedByLocal: isOwnedByLocal } })}>
+                        <View style={styles.editButtonView}>
+                            <EditOutlined name="edit" size={24} color="#007AFF" />
+                        </View>
+                    </TouchableOpacity>} */}
                     <Text style={styles.title} numberOfLines={1}>{title}</Text>
                     <View style={styles.memberCount}>
                         <Icon name="people" size={16} color="#666" />
@@ -104,13 +167,28 @@ const ClassGroupEntry: React.FC<ClassGroupEntryProps> = ({
 
                     <Pressable
                         style={[
-                            styles.joinButton,
-                            isPrivate && styles.requestButton
+                            isOwnedByLocal ? styles.editButton :
+                                localIsJoined ? styles.leaveButton :
+                                    isPrivate ? styles.requestButton :
+                                        styles.joinButton
                         ]}
-                        onPress={() => {/* Handle join/request */ }}
+                        onPress={() => {
+                            if (isOwnedByLocal) {
+                                handleEdit()
+                            } else if (localIsJoined) {
+                                handleLeave()
+                            } else if (isPrivate) {
+                                handleRequest()
+                            } else {
+                                handleJoin()
+                            }
+                        }}
                     >
-                        <Text style={styles.joinButtonText}>
-                            {isPrivate ? "Request" : "Join"}
+                        <Text style={[isOwnedByLocal ? styles.editButtonText :
+                            localIsJoined ? styles.leaveButtonText :
+                                isPrivate ? styles.requestButtonText :
+                                    styles.joinButtonText]}>
+                            {isOwnedByLocal ? "Edit" : localIsJoined ? "Leave" : isPrivate ? "Request" : "Join"}
                         </Text>
                     </Pressable>
                 </View>
@@ -206,12 +284,68 @@ const styles = StyleSheet.create({
     },
     requestButton: {
         backgroundColor: '#FF9500',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        minWidth: 80,
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+    },
+    editButton: {
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 50,
+        minWidth: 80,
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        borderColor: '#007AFF',
+        borderWidth: 2,
+    },
+    leaveButton: {
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 50,
+        minWidth: 80,
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        borderColor: 'red',
+        borderWidth: 2,
     },
     joinButtonText: {
         color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',
     },
+    requestButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    editButtonText: {
+        color: '#007AFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    leaveButtonText: {
+        color: 'red',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    // editButtonContainer: {
+    //     backgroundColor: '#FFFFFF',
+    //     width: 35,
+    //     height: 35,
+    //     borderRadius: 8,
+    // },
+    // editButtonView: {
+    //     width: 'auto',
+    //     height: 'auto',
+    //     flex: 1,
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    // }
 })
 
 export default ClassGroupEntry

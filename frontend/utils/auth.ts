@@ -92,7 +92,7 @@ export const validateToken = async (accessToken: string): Promise<any> => {
     })
     return response.data.user
   } catch (error) {
-    console.error('Error validating token:', error)
+    // console.error('Error validating token:', error)
     return null
   }
 }

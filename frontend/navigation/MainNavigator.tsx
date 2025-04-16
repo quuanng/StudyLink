@@ -11,6 +11,8 @@ import ProfileScreen from '../screens/ProfileScreen'
 import SingleChatScreen from '../screens/SingleChatScreen'
 import ClassViewScreen from '../screens/ClassViewScreen'
 import GroupCreationForm from '../screens/GroupCreationForm'
+import GroupEditForm from '../screens/GroupEditForm'
+import { ClassGroupEntryProps } from '../components/ClassGroupEntry'
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
@@ -20,6 +22,7 @@ export type RootStackParamList = {
   SingleChatScreen: { chatId: string },
   ClassViewScreen: { classId: string, className: string; members: number; instructor: string; }
   GroupCreationForm: { classId: string; className: string; }
+  GroupEditForm: { group: ClassGroupEntryProps }
 }
 
 function TabNavigator() {
@@ -63,6 +66,7 @@ export default function MainNavigator() {
         <Stack.Screen name="ClassViewScreen" component={ClassViewScreen} />
 
         <Stack.Screen options={{ ...TransitionPresets.ModalPresentationIOS }} name="GroupCreationForm" component={GroupCreationForm} />
+        <Stack.Screen options={{ ...TransitionPresets.ModalPresentationIOS }} name="GroupEditForm" component={GroupEditForm} />
       </Stack.Navigator>
     </NavigationContainer>
   )

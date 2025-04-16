@@ -17,14 +17,15 @@ import { RootStackParamList } from '../navigation/MainNavigator'
 import { AuthContext } from '../context/AuthContext'
 import Icon from 'react-native-vector-icons/Ionicons'
 import DatePicker from 'react-native-date-picker'
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import backend from '../backend'
 import { getAccessToken, refreshAccessToken } from '../utils/auth'
+import { ClassGroupEntryProps } from '../components/ClassGroupEntry'
 
-export default function GroupCreationForm() {
+export default function GroupEditForm() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
   const route = useRoute()
-  const { classId, className } = route.params as { classId: string, className: string }
+  const { group } = route.params as { group: ClassGroupEntryProps }
 
   const { user } = useContext(AuthContext)
 
@@ -65,67 +66,20 @@ export default function GroupCreationForm() {
   }
 
   const handleSubmit = async () => {
-    if (!user) {
-      Alert.alert("Log in to create a study group")
-      return
-    }
-  
-    if (!validateForm()) return
-  
-    const payload = {
-      classId,
-      creatorId: user.id,
-      title,
-      time: date.toISOString(),
-      location,
-      maxStudents: parseInt(maxStudents),
-      priv: isPrivate,
-    }
-  
-    try {
-      let accessToken = await getAccessToken()
-  
-      if (!accessToken) {
-        throw new Error("No access token available")
-      }
-  
-      const config = {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-  
-      let response
-  
-      try {
-        response = await backend.post('/study-group/add', payload, config)
-      } catch (err: any) {
-        if (err.response?.status === 401) {
-          // Try refreshing the token
-          accessToken = await refreshAccessToken()
-          if (accessToken) {
-            const retryConfig = {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-            response = await backend.post('/study-group/add', payload, retryConfig)
-          } else {
-            throw new Error("Unable to refresh token")
-          }
-        } else {
-          throw err
-        }
-      }
-  
-      Alert.alert("Success", "Study group created!")
-      navigation.goBack()
-    } catch (err) {
-      console.error(err)
-      Alert.alert("Error", "Failed to create study group. Please try again.")
-    }
+    // TODO: do once edit route is in
+
+    group.refresh()
+    navigation.goBack()
   }
-  
+
+  useEffect(() => {
+    setTitle(group.title)
+    setDate(new Date(group.timestamp))
+    setLocation(group.location)
+    setMaxStudents(group.maxStudents.toString())
+    setIsPrivate(group.isPrivate)
+  }, [group])
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -141,8 +95,8 @@ export default function GroupCreationForm() {
             <Icon name="chevron-back" size={24} color="#007AFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.chatTitle}>Create a Group</Text>
-            <Text style={styles.participantCount}>{className}</Text>
+            <Text style={styles.chatTitle}>Editing Group</Text>
+            <Text style={styles.participantCount}>{group?.title}</Text>
           </View>
         </View>
 
@@ -234,7 +188,7 @@ export default function GroupCreationForm() {
             style={styles.createButton}
             onPress={handleSubmit}
           >
-            <Text style={styles.createButtonText}>Create Group</Text>
+            <Text style={styles.createButtonText}>Confirm Edit</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
