@@ -1,1 +1,1 @@
-export const API_URL = "http://localhost:8240"
+export const API_URL = "https://studylink-3cg5.onrender.com"

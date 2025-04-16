@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { createStackNavigator } from '@react-navigation/stack'
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { ThemeContext } from '../context/ThemeContext' // To manage light/dark mode
@@ -10,6 +10,9 @@ import ChatsScreen from '../screens/ChatsScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import SingleChatScreen from '../screens/SingleChatScreen'
 import ClassViewScreen from '../screens/ClassViewScreen'
+import GroupCreationForm from '../screens/GroupCreationForm'
+import GroupEditForm from '../screens/GroupEditForm'
+import { ClassGroupEntryProps } from '../components/ClassGroupEntry'
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
@@ -17,7 +20,9 @@ const Stack = createStackNavigator()
 export type RootStackParamList = {
   MainTabs: undefined,
   SingleChatScreen: { chatId: string },
-  ClassViewScreen: { className: string; members: number; instructor: string; }
+  ClassViewScreen: { classId: string, className: string; members: number; instructor: string; }
+  GroupCreationForm: { classId: string; className: string; }
+  GroupEditForm: { group: ClassGroupEntryProps }
 }
 
 function TabNavigator() {
@@ -59,6 +64,9 @@ export default function MainNavigator() {
         <Stack.Screen name="SingleChatScreen" component={SingleChatScreen} />
 
         <Stack.Screen name="ClassViewScreen" component={ClassViewScreen} />
+
+        <Stack.Screen options={{ ...TransitionPresets.ModalPresentationIOS }} name="GroupCreationForm" component={GroupCreationForm} />
+        <Stack.Screen options={{ ...TransitionPresets.ModalPresentationIOS }} name="GroupEditForm" component={GroupEditForm} />
       </Stack.Navigator>
     </NavigationContainer>
   )

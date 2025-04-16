@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useContext } from 'react'
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
 import ClassEntry from '../components/ClassEntry'
 import ClassSearch from '../components/ClassSearch'
 import backend from '../backend'
+import { AuthContext } from '../context/AuthContext'
 
 export interface ClassEntryItem {
   id: string;
@@ -20,16 +21,21 @@ export default function ClassesScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const isFirstRender = useRef(true)
 
+  const { user } = useContext(AuthContext)
+
   useEffect(() => {
     const fetchClasses = async () => {
       try {
+        const savedCourseResponse = await backend.get(`/user/${user?.id}/saved-courses`)
+        const courses = savedCourseResponse.data.savedCourses
+
         const response = await backend.get(`/class/courses`)
         const formattedClasses = response.data.map((course: any) => ({
           id: course._id,
           className: course.full_name,
           members: course.count,
           icon: '',
-          joined: false,
+          joined: courses.some((c: any) => course._id === c._id),
         }))
 
         setClasses(formattedClasses)
@@ -64,13 +70,17 @@ export default function ClassesScreen() {
 
   const fetchSearchedClasses = async (query: string) => {
     try {
+
+      const savedCourseResponse = await backend.get(`/user/${user?.id}/saved-courses`)
+      const courses = savedCourseResponse.data.savedCourses
+
       const response = await backend.get(`/class/courses?search=${query}`)
       const searchedClasses = response.data.map((course: any) => ({
         id: course._id,
         className: course.full_name,
         members: course.count,
         icon: '',
-        joined: false,
+        joined: courses.some((c: any) => course._id === c._id),
       }))
 
       setFilteredData(searchedClasses)
@@ -101,11 +111,18 @@ export default function ClassesScreen() {
 
   const renderItem = ({ item }: { item: ClassEntryItem }) => (
     <ClassEntry
+      classId={item.id}
       className={item.className}
       members={item.members}
       icon={item.icon}
       joined={item.joined}
       screen={'classes'}
+      updateJoined={(joined) =>
+        setFilteredData(prev =>
+          prev.map(cls =>
+            cls.id === item.id ? { ...cls, joined: joined } : cls
+          )
+        )}
     />
   )
 
