@@ -15,13 +15,14 @@ import GroupEditForm from '../screens/GroupEditForm'
 import { ClassGroupEntryProps } from '../components/ClassGroupEntry'
 import { AuthContext } from '../context/AuthContext'
 import ProfileScreen from '../screens/ProfileScreen'
+import InboxScreen from '../screens/InboxScreen'
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 
 export type RootStackParamList = {
   LoginScreen: undefined,
-  MainTabs: undefined,
+  MainTabs: { screen?: string },
   SingleChatScreen: { chatId: string },
   ClassViewScreen: { classId: string, className: string; members: number; instructor: string; }
   GroupCreationForm: { classId: string; className: string; }
@@ -48,6 +49,7 @@ function TabNavigator() {
           if (route.name === 'Home') iconName = 'home-outline'
           else if (route.name === 'Courses') iconName = 'search-outline'
           else if (route.name === 'Chats') iconName = 'chatbubbles-outline'
+          else if (route.name === 'Inbox') iconName = 'mail-outline'
           else if (route.name === 'Profile') iconName = 'person-outline'
 
           return <Icon name={iconName} size={size} color={color} />
@@ -59,6 +61,7 @@ function TabNavigator() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Courses" component={ClassesScreen} />
       <Tab.Screen name="Chats" component={ChatsScreen} />
+      <Tab.Screen name="Inbox" component={InboxScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )
