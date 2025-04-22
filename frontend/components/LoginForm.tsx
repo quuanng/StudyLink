@@ -57,7 +57,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading, swapForm }) =>
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Pressable style={styles.loginButton} onPress={handleSubmit} disabled={loading}> 
+      <Pressable style={styles.loginButton} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.loginButton}>
           {loading ? 'Logging In...' : 'Log In'}
         </Text>

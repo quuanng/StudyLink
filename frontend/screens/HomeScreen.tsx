@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react'
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native'
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, TouchableOpacity} from 'react-native'
 import ClassEntry from '../components/ClassEntry'
 import { ClassEntryItem } from './ClassesScreen'
 import backend from '../backend'
 import { AuthContext } from '../context/AuthContext'
 import { useFocusEffect } from '@react-navigation/native'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackParamList } from '../navigation/MainNavigator'
+import { StackNavigationProp } from '@react-navigation/stack'
 
 export default function HomeScreen() {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
   const { user } = useContext(AuthContext)
   const [joinedClasses, setJoinedClasses] = useState<ClassEntryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,6 +64,10 @@ export default function HomeScreen() {
     />
   )
 
+  const handleUnreadRequestsPress = () => {
+    navigation.navigate('MainTabs', { screen: 'Inbox' })
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -78,6 +86,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.inboxButton}
+        onPress={handleUnreadRequestsPress}
+      >
+        <Text style={styles.inboxButtonText}>(1) Unread Request to Join Group</Text>
+      </TouchableOpacity>
       <FlatList
         data={joinedClasses}
         renderItem={renderItem}
@@ -101,5 +115,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  inboxButton: {
+    backgroundColor: '#d1001f',
+    marginTop: 5,
+    marginHorizontal: 5,
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  inboxButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

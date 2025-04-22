@@ -1,239 +1,220 @@
-import React, { useState, useEffect, useContext } from 'react'
-import { View, Text, Alert, Button, StyleSheet, ImageBackground, Image, Pressable } from 'react-native'
-import LoginForm from '../components/LoginForm'
-import { storeTokens, getAccessToken, getRefreshToken, deleteTokens, validateToken } from '../utils/auth'
-import RegisterForm from '../components/RegisterForm'
-import { AxiosError } from 'axios'
-import backend from '../backend'
-import { AuthContext } from '../context/AuthContext'
-
-interface ErrorResponse {
-  error: string
-}
+import { useContext, useEffect, useState } from "react"
+import { Alert, Button, SafeAreaView, Text, ScrollView, TouchableOpacity } from "react-native"
+import backend from "../backend"
+import { AuthContext } from "../context/AuthContext"
+import { getRefreshToken } from "../utils/auth"
+import { StyleSheet } from "react-native"
+import { View } from "react-native"
+import Icon from 'react-native-vector-icons/MaterialIcons'
 
 const ProfileScreen: React.FC = () => {
-  const { user, login, logout } = useContext(AuthContext)
-  const [loading, setLoading] = useState(false)
-  const [activeForm, setActiveForm] = useState<"login" | "register">("login")
+    const { user, login, logout } = useContext(AuthContext)
+    const [avatarColor, setAvatarColor] = useState('#000000')
 
-  // Check if a user is already logged in on screen load
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const accessToken = await getAccessToken()
-        if (accessToken) {
-          const userData = await validateToken(accessToken)
-          if (userData) {
-            // Get refresh token and update AuthContext with both tokens
+    useEffect(() => {
+        if (user == null) return
+
+        // Generate a consistent profile color based on the user's ID
+        const hash = user.id.split('').reduce((acc, char) => {
+            return char.charCodeAt(0) + ((acc << 5) - acc)
+        }, 0)
+
+        // Generate a pastel color using the hash
+        const hue = Math.abs(hash % 360)
+        const saturation = 70
+        const lightness = 80
+        setAvatarColor(`hsl(${hue}, ${saturation}%, ${lightness}%)`)
+    }, [user])
+
+    const handleLogout = async () => {
+        try {
             const refreshToken = await getRefreshToken()
             if (refreshToken) {
-              login(userData, accessToken, refreshToken)
-            } else {
-              await deleteTokens()
+                await backend.post('/login/logout', { refreshToken })
             }
-          } else {
-            await deleteTokens()
-          }
+            logout()
+            Alert.alert('Logged out', 'You have been logged out successfully.')
+        } catch (error) {
+            console.error('Logout error:', error)
         }
-      } catch (error) {
-        console.error('Error checking login status:', error)
-      }
     }
 
-    checkLoginStatus()
-  }, [])
-
-  // Handle login form submission
-  const handleLogin = async (email: string, password: string) => {
-    setLoading(true)
-    try {
-      const response = await backend.post(`/login/login`, { email, password })
-      const { accessToken, refreshToken, user } = response.data
-      await storeTokens(accessToken, refreshToken)
-      // Update AuthContext with the logged in user and both tokens
-      login(user, accessToken, refreshToken)
-      Alert.alert('Success', `Welcome, ${user.name}!`)
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<ErrorResponse>
-      console.error('Login error:', axiosError)
-      const errorMessage =
-        axiosError.response?.data?.error || 'An error occurred'
-      Alert.alert('Login Failed', errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle register form submission
-  const handleRegister = async (name: string, email: string, password: string) => {
-    setLoading(true)
-    try {
-      const response = await backend.post(`/user/add`, { name, email, password })
-      const { user } = response.data
-      Alert.alert('Account created successfully', `You may now log in as ${user.name}!`)
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<ErrorResponse>
-      console.error('Registration error:', axiosError)
-      const errorMessage =
-        axiosError.response?.data?.error || 'An error occurred'
-      Alert.alert('Registration Failed', errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      const refreshToken = await getRefreshToken()
-      if (refreshToken) {
-        await backend.post('/login/logout', { refreshToken })
-      }
-      logout()
-      Alert.alert('Logged out', 'You have been logged out successfully.')
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-  }
-
-  return (
-    <ImageBackground
-      source={{ uri: 'https://images.unsplash.com/photo-1557683304-673a23048d34' }}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Image 
-              source={require('../assets/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.content}>
-            {user ? (
-              <View style={styles.profileContainer}>
-                <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
-                <Button title="Logout" onPress={handleLogout} />
-              </View>
-            ) : (
-              <View style={styles.formContainer}>
-                {activeForm === "login" ? (
-                  <LoginForm
-                    onSubmit={handleLogin}
-                    loading={loading}
-                    swapForm={() => setActiveForm("register")}
-                  />
-                ) : (
-                  <RegisterForm
-                    onSubmit={handleRegister}
-                    loading={loading}
-                    swapForm={() => setActiveForm("login")}
-                  />
-                )}
-                <View style={styles.orContainer}>
-                  <View style={styles.line} />
-                  <Text style={styles.orText}>or</Text>
-                  <View style={styles.line} />
+    if (!user) {
+        return (
+            <SafeAreaView style={styles.safeArea}>
+                <View style={styles.loadingContainer}>
+                    <Text>Loading...</Text>
                 </View>
-              </View>
-            )}
-          </View>
-          {!user && (
-            <View style={styles.swapButtonContainer}>
-              {activeForm === "login" ? (
-                <Pressable onPress={() => setActiveForm("register")}>
-                  <Text style={styles.swapButtonText}>Create new account</Text>
-                </Pressable>
-              ) : (
-                <Pressable onPress={() => setActiveForm("login")}>
-                  <Text style={styles.swapButtonText}>I already have an account</Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </View>
-      </View>
-    </ImageBackground>
-  )
+            </SafeAreaView>
+        )
+    }
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView style={styles.container}>
+                <View style={styles.profileSection}>
+                    <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+                        <Text style={styles.avatarText}>
+                            {user?.name.charAt(0).toUpperCase()}
+                        </Text>
+                    </View>
+                    <Text style={styles.userName}>{user?.name}</Text>
+                    <Text style={styles.userEmail}>{user?.email}</Text>
+                </View>
+
+                <View style={styles.infoSection}>
+                    <View style={styles.infoCard}>
+                        <View style={styles.infoRow}>
+                            <Icon name="school" size={24} color="#007AFF" />
+                            <View style={styles.infoContent}>
+                                <Text style={styles.infoLabel}>School</Text>
+                                <Text style={styles.infoValue}>University of Minnesota</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoCard}>
+                        <View style={styles.infoRow}>
+                            <Icon name="event" size={24} color="#007AFF" />
+                            <View style={styles.infoContent}>
+                                <Text style={styles.infoLabel}>Member Since</Text>
+                                <Text style={styles.infoValue}>January 2024</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoCard}>
+                        <View style={styles.infoRow}>
+                            <Icon name="group" size={24} color="#007AFF" />
+                            <View style={styles.infoContent}>
+                                <Text style={styles.infoLabel}>Study Groups</Text>
+                                <Text style={styles.infoValue}>3 Active Groups</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.settingsSection}>
+                    <TouchableOpacity
+                        style={styles.settingsButton}
+                        onPress={handleLogout}
+                    >
+                        <Icon name="logout" size={24} color="#FF3B30" />
+                        <Text style={styles.settingsButtonText}>Log Out</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    )
 }
 
-const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: -40,
-  },
-  logo: {
-    width: 350,
-    height: 350,
-    marginBottom: 0,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 0,
-  },
-  formContainer: {
-    padding: 20,
-    borderRadius: 15,
-    marginTop: -60,
-  },
-  profileContainer: {
-    padding: 20,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-  welcomeText: {
-    fontSize: 20,
-    marginBottom: 20,
-    color: '#fff',
-  },
-  swapButtonContainer: {
-    paddingBottom: 20,
-    alignItems: 'center',
-  },
-  swapButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-    width: 250,
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
-    marginTop: 40,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginHorizontal: 10,
-  },
-  orText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginHorizontal: 10,
-  },
-})
-
 export default ProfileScreen
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+    },
+    profileSection: {
+        alignItems: 'center',
+        paddingVertical: 24,
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e5e5',
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        marginBottom: 16,
+    },
+    avatarText: {
+        fontSize: 40,
+        fontWeight: '600',
+        color: '#000000',
+    },
+    userName: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#000000',
+        marginBottom: 4,
+    },
+    userEmail: {
+        fontSize: 16,
+        color: '#666666',
+    },
+    infoSection: {
+        padding: 16,
+    },
+    infoCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    infoContent: {
+        marginLeft: 16,
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 14,
+        color: '#666666',
+        marginBottom: 4,
+    },
+    infoValue: {
+        fontSize: 16,
+        color: '#000000',
+        fontWeight: '500',
+    },
+    settingsSection: {
+        padding: 16,
+        marginTop: 8,
+    },
+    settingsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+        padding: 16,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    settingsButtonText: {
+        marginLeft: 16,
+        fontSize: 16,
+        color: '#FF3B30',
+        fontWeight: '500',
+    },
+})
