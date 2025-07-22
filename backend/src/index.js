@@ -5,12 +5,12 @@ import dotenv from "dotenv"
 import http from "http"
 import { Server } from "socket.io"
 import routesRouter from "./routes/routes.js"
-import { ChatModel } from "./models/Chat.js"
+import { setupSocketHandlers } from "./socketHandler.js"
 
 dotenv.config()
 
 const app = express()
-const port = process.env.PORT || 8240
+const port = process.env.PORT || 8080
 
 const server = http.createServer(app)
 
@@ -30,31 +30,8 @@ app.get("/", (req, res) => {
 
 app.use("/api", routesRouter)
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id)
-
-  socket.on("joinGroup", (groupId) => {
-    socket.join(groupId)
-  })
-
-  socket.on("sendMessage", async (data) => {
-    const { groupId, senderId, senderName, message } = data
-
-    if (!message || message.trim() === "") {
-      socket.emit("error", { message: "Message cannot be empty" })
-      return
-    }
-
-    const newMessage = new ChatModel({ groupId, senderId, senderName, message })
-    await newMessage.save()
-
-    io.to(groupId).emit("message", newMessage)
-  })
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id)
-  })
-})
+// Setup socket handlers
+setupSocketHandlers(io)
 
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
