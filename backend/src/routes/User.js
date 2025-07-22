@@ -30,40 +30,6 @@ router.post("/add", async (req, res) => {
     }
 })
 
-// Get user information by id
-router.get("/:id", async (req, res) => {
-    const { id } = req.params
-
-    try {
-        // Find user by ID
-        const user = await UsersModel.findById(id)
-
-        if (!user) {
-            return res.status(404).json({ error: "User not found" })
-        }
-
-        res.status(200).json({ user })
-    } catch (error) {
-        console.error(error)
-
-        // Handle invalid IDs or other errors
-        if (error.kind === "ObjectId") {
-            return res.status(400).json({ error: "Invalid user ID format" })
-        }
-
-        res.status(500).json({ error: "Failed to fetch user" })
-    }
-})
-
-router.get("/read", async (req, res) => {
-    try {
-        const response = await UsersModel.find()
-        res.json(response)
-    } catch (e) {
-        res.json(e)
-    }
-})
-
 // Toggle saving/unsaving a class for a user
 router.post("/toggle-class", async (req, res) => {
     const { userId, classId } = req.body
@@ -139,5 +105,31 @@ router.get("/:userId/saved-courses", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch user's saved courses" })
     }
 })
+
+// Returns user object by ID - may not need
+/*
+router.get("/:id", async (req, res) => {
+    const { id } = req.params
+
+    try {
+        // Find user by ID
+        const user = await UsersModel.findById(id)
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" })
+        }
+
+        res.status(200).json({ user })
+    } catch (error) {
+        console.error(error)
+
+        // Handle invalid IDs or other errors
+        if (error.kind === "ObjectId") {
+            return res.status(400).json({ error: "Invalid user ID format" })
+        }
+
+        res.status(500).json({ error: "Failed to fetch user" })
+    }
+}) */
 
 export default router

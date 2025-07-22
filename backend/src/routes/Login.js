@@ -7,7 +7,6 @@ const router = express.Router()
 
 // Login endpoint
 router.post("/login", async (req, res) => {
-  console.log("Login endpoint called")
   const { email, password } = req.body
 
   try {
@@ -56,7 +55,6 @@ router.post("/login", async (req, res) => {
 
 // Refresh token endpoint
 router.post("/refresh-token", async (req, res) => {
-  console.log("Refresh token endpoint called")
   const { refreshToken } = req.body
 
   if (!refreshToken) {
@@ -76,7 +74,7 @@ router.post("/refresh-token", async (req, res) => {
     // Generate new access token
     const accessToken = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { 
       expiresIn: process.env.ACCESS_TOKEN_EXPIRATION || "15m"
-   })
+    })
 
     // Generate new refresh token
     const newRefreshToken = jwt.sign({ userId: user._id }, process.env.JWT_REFRESH_SECRET, {
@@ -104,7 +102,6 @@ router.post("/refresh-token", async (req, res) => {
 
 // Logout endpoint
 router.post("/logout", async (req, res) => {
-  console.log("Logout endpoint called")
   const { refreshToken } = req.body
 
   if (!refreshToken) {
@@ -127,7 +124,6 @@ router.post("/logout", async (req, res) => {
 })
 
 router.get("/me", async (req, res) => {
-  console.log("Me endpoint called")
   const authHeader = req.headers.authorization
 
   // Check if the Authorization header is provided

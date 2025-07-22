@@ -7,18 +7,18 @@ import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
 
-// Get study group info
+// Returns study group object by ID
 router.get("/:groupId", async (req, res) => {
   try {
     const group = await StudyGroupModel.findById(req.params.groupId)
-    res.json(group)
+    res.status(200).json(group)
   } catch (error) {
     console.log(error)
     res.status(500).json({ error: "Error getting study group." })
   }
 })
 
-// Get all study groups a user is in
+// Returns formatted study group objects for a specific user
 router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params
 
@@ -48,10 +48,9 @@ router.get("/user/:userId", async (req, res) => {
   }
 })
 
-// Add a new study group
+// Create a new study group
 router.post("/add", authMiddleware, async (req, res) => {
   const { classId, title, time, location, maxStudents, priv, creatorId } = req.body
-  console.log(req.body)
 
   try {
     // Ensure the class exists
@@ -84,7 +83,7 @@ router.post("/add", authMiddleware, async (req, res) => {
 })
 
 // Add a user to a study group
-router.post("/join", async (req, res) => {
+router.post("/join", authMiddleware, async (req, res) => {
   const { studyGroupId, userId } = req.body
 
   try {
@@ -122,7 +121,7 @@ router.post("/join", async (req, res) => {
 })
 
 // Remove a user from a study group
-router.delete("/:studyGroupId/member/:userId", async (req, res) => {
+router.delete("/:studyGroupId/:userId", authMiddleware, async (req, res) => {
   const { studyGroupId, userId } = req.params
   const { requesterId } = req.body // Requester performing the action
 
@@ -175,7 +174,7 @@ router.delete("/:studyGroupId/member/:userId", async (req, res) => {
   }
 })
 
-// Get all study groups for a specific class
+// Get all study groups objects for a specific class
 router.get("/class/:classId", async (req, res) => {
   try {
     const { classId } = req.params

@@ -6,7 +6,8 @@ import authMiddleware from "../middleware/authMiddleware.js"
 
 const router = Router()
 
-router.get("/:groupId", async (req, res) => {
+// Retrieves all chat messages for a specific StudyGroup
+router.get("/:groupId", authMiddleware, async (req, res) => {
   const { groupId } = req.params
 
   try {
@@ -21,7 +22,8 @@ router.get("/:groupId", async (req, res) => {
   }
 })
 
-// sends a chat to a StudyGroup - this route also needs to be authenticated similarly
+// sends a chat to a StudyGroup - for dev use only
+/*
 router.post("/", async(req, res) => {
     try {
         const { groupId, senderId, senderName, message } = req.body
@@ -37,7 +39,7 @@ router.post("/", async(req, res) => {
     } catch {
         res.status(500).json({ error: error.message })
     }
-})
+})*/
 
 
 export default router
